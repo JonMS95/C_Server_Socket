@@ -12,20 +12,6 @@
 #define GREETING_SIZE   100
 #define RX_BUFFER_SIZE  256     // RX buffer size.
 
-typedef enum
-{
-    DESCRIPTOR = 0  ,
-    OPTIONS         ,
-    PARAMETERS      ,
-    BIND            ,
-    LISTEN          ,
-    ACCEPT          ,
-    WRITE           ,
-    READ            ,
-    CLOSE           ,
-
-}SOCKET_STATE;
-
 /// @brief Create socket descriptor.
 /// @param domain Use AF_INET if the socket is meant to be serving to another computer in the same net,
 /// AF_LOCAL if the purpose is to communicate different processes within the same host.
