@@ -4,6 +4,7 @@
 #include <arpa/inet.h>  // sockaddr_in, inet_addr
 #include <unistd.h>     // Write socket.
 #include <string.h>     // strcpy
+#include <netinet/tcp.h>
 
 #define TEST_PORT       8080    // TCP testing port.
 #define CONN_NUM        3       // Maximum number of concurrent connections that the socket may attend to.
@@ -32,14 +33,19 @@ int main(int argc, char** argv)
     printf("Socket file descriptor created.\r\n");
 
     // Set socket options.
-    int keep_alive      = 1;
     int reuse_address   = 1;
     int reuse_port      = 1;
+    int keep_idle       = 1;
+    int keep_counter    = 5;
+    int keep_interval   = 5;
     int socket_options;
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE, &keep_alive      , sizeof(keep_alive     ));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, &reuse_address   , sizeof(reuse_address  ));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT, &reuse_port      , sizeof(reuse_port     ));
-    
+
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address, sizeof(reuse_address    ));
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port   , sizeof(reuse_port       ));
+    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
+    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
+    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
+
     if(socket_options < 0)
     {
         perror("Failed to set socket options");
@@ -76,6 +82,9 @@ int main(int argc, char** argv)
     }
     printf("Connection accepted.\r\n");
 
+    int keep_alive = 1;
+    socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
+
     // Send a message to the client as soon as it is accepted.
     char client_ip_addr[IP_ADDR_SIZE + 1];
     memset(client_ip_addr, 0, sizeof(client_ip_addr));
@@ -100,9 +109,10 @@ int main(int argc, char** argv)
             printf("Data read from RX buffer: <%s>\r\n", rx_buffer);
             memset(rx_buffer, 0, read_from_socket);
         }
-        else if(read_from_socket < 0)
+        else if(read_from_socket <= 0)
         {
             printf("An error happened while reading.\r\n");
+            break;
         }
     }
 
