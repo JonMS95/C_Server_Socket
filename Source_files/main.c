@@ -17,7 +17,6 @@
 */
 int main(int argc, char** argv)
 {
-    printf("Start.\r\n");
     // Create socket descriptor.
     // Use AF_INET if the socket is meant to be serving to another computer in the same net.
     // Use AF_LOCAL the purpose is to communicate different processes within the same host.
