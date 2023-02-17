@@ -24,7 +24,7 @@ int ParsePort(char** argument_list)
     if(argument_list[ARGV_PORT_IDX] == NULL)
     {
         printf("\033[0;31m");
-        printf("[ERROR] No port number was provided\r\n");
+        printf("[ERROR] No port number was provided.\r\n");
         printf("\033[0m");
         return ERR_NO_PORT_PROVIDED;
     }
@@ -50,7 +50,7 @@ int ParseConnNum(char** argument_list)
     if(argument_list[ARGV_MAX_CONN_NUM_IDX] == NULL)
     {
         printf("\033[0;31m");
-        printf("[ERROR] No maximum number of conections argument provided.\r\n");
+        printf("[ERROR] No maximum number of connections argument provided.\r\n");
         printf("\033[0m");
         return ERR_NO_MAX_CONN_PROVIDED;
     }
@@ -60,7 +60,7 @@ int ParseConnNum(char** argument_list)
     if(max_conn_num < 1 || max_conn_num > 3)
     {
         printf("\033[0;31m");
-        printf("[ERROR] Maximum number of connections out of acceptable range (%d-%d)\r\n", MIN_CONN_NUM, MAX_CONN_NUM);
+        printf("[ERROR] Maximum number of connections out of acceptable range (%d-%d).\r\n", MIN_CONN_NUM, MAX_CONN_NUM);
         printf("\033[0m");
         return ERR_MAX_CONN_OUT_OF_RANGE;
     }
