@@ -4,7 +4,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#define TEST_PORT       8080    // TCP testing port.
 #define CONN_NUM        3       // Maximum number of concurrent connections that the socket may attend to.
 #define IP_ADDR_SIZE    15      // IP address string size.
 #define GREETING_SIZE   100
