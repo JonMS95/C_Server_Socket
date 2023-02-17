@@ -132,7 +132,9 @@ int SocketAccept(int socket_desc)
     {
         perror("Accept failed");
     }
-    printf("Connection accepted.\r\n");
+    printf("\033[0;32m");
+    printf("Connection accepted. Client's IP address: %s\r\n", inet_ntoa(client.sin_addr));
+    printf("\033[0m");
 
     int keep_alive = 1;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
@@ -172,7 +174,9 @@ int SocketRead(int new_socket)
         }
         else if(read_from_socket <= 0)
         {
-            printf("An error happened while reading (client disconnected).\r\n");
+            printf("\033[0;31m");
+            printf("[ERROR] Client disconnected.\r\n");
+            printf("\033[0m");
             break;
         }
     }
