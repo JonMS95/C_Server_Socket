@@ -1,3 +1,10 @@
+#include <stdio.h>
+#include <sys/socket.h>     // socket, bind, listen accept functions.
+#include <stdlib.h>         // EXIT_FAILURE
+#include <arpa/inet.h>      // sockaddr_in, inet_addr
+#include <unistd.h>         // Write socket.
+#include <string.h>         // strcpy
+#include <netinet/tcp.h>    // SO_KEEPALIVE
 #include "socket_use.h"
 
 /// @brief Create socket descriptor.
@@ -162,6 +169,9 @@ int SocketRead(int new_socket)
     return read_from_socket;
 }
 
+/// @brief Closes the socket.
+/// @param new_socket ID of the socket that is meant to be closed.
+/// @return < 0 if close failed.
 int CloseSocket(int new_socket)
 {
     // Close the socket.

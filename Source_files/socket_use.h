@@ -1,13 +1,8 @@
 #ifndef SOCKET_USE_H
 #define SOCKET_USE_H
 
-#include <stdio.h>
-#include <sys/socket.h>     // socket, bind, listen accept functions.
-#include <stdlib.h>         // EXIT_FAILURE
-#include <arpa/inet.h>      // sockaddr_in, inet_addr
-#include <unistd.h>         // Write socket.
-#include <string.h>         // strcpy
-#include <netinet/tcp.h>    // SO_KEEPALIVE
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 #define TEST_PORT       8080    // TCP testing port.
 #define CONN_NUM        3       // Maximum number of concurrent connections that the socket may attend to.
