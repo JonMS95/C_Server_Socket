@@ -65,7 +65,7 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
     struct sockaddr_in server;
     server.sin_family = AF_INET;            // IPv4.
     server.sin_addr.s_addr = INADDR_ANY;    // Any address is allowed to connect to the socket.
-    server.sin_port = htons(TEST_PORT);     // The htons() function makes sure that numbers are stored in memory
+    server.sin_port = htons(listen_port);   // The htons() function makes sure that numbers are stored in memory
                                             // in network byte order, which is with the most significant byte first.
 
     return server;
@@ -96,7 +96,7 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
 /// @return < 0 if listening failed.
 int SocketListen(int socket_desc, int connections_number)
 {
-    int socket_listen = listen(socket_desc, CONN_NUM);
+    int socket_listen = listen(socket_desc, connections_number);
 
     if(socket_listen < 0)
     {
