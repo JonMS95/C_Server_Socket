@@ -7,6 +7,11 @@
 #include <netinet/tcp.h>    // SO_KEEPALIVE
 #include "socket_use.h"
 
+#define CONN_NUM        3       // Maximum number of concurrent connections that the socket may attend to.
+#define IP_ADDR_SIZE    15      // IP address string size.
+#define GREETING_SIZE   100
+#define RX_BUFFER_SIZE  256     // RX buffer size.
+
 /// @brief Create socket descriptor.
 /// @param domain Use AF_INET if the socket is meant to be serving to another computer in the same net,
 /// AF_LOCAL if the purpose is to communicate different processes within the same host.
