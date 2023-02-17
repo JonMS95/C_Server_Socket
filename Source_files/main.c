@@ -23,7 +23,9 @@ int ParsePort(char** argument_list)
 {
     if(argument_list[ARGV_PORT_IDX] == NULL)
     {
-        printf("ERROR: No port number was provided\r\n");
+        printf("\033[0;31m");
+        printf("[ERROR] No port number was provided\r\n");
+        printf("\033[0m");
         return ERR_NO_PORT_PROVIDED;
     }
     
@@ -31,7 +33,9 @@ int ParsePort(char** argument_list)
 
     if(server_port < MIN_PORT_VALUE || server_port > MAX_PORT_VALUE)
     {
-        printf("ERROR: Address out of acceptable range (%d-%d).\r\n", MIN_PORT_VALUE, MAX_PORT_VALUE);
+        printf("\033[0;31m");
+        printf("[ERROR] Address out of acceptable range (%d-%d).\r\n", MIN_PORT_VALUE, MAX_PORT_VALUE);
+        printf("\033[0m");
         return ERR_PORT_OUT_OF_RANGE;
     }
 
@@ -45,7 +49,9 @@ int ParseConnNum(char** argument_list)
 {
     if(argument_list[ARGV_MAX_CONN_NUM_IDX] == NULL)
     {
-        printf("ERROR: No maximum number of conections argument provided.\r\n");
+        printf("\033[0;31m");
+        printf("[ERROR] No maximum number of conections argument provided.\r\n");
+        printf("\033[0m");
         return ERR_NO_MAX_CONN_PROVIDED;
     }
 
@@ -53,8 +59,9 @@ int ParseConnNum(char** argument_list)
 
     if(max_conn_num < 1 || max_conn_num > 3)
     {
-        char error_msg[MAX_ERROR_MSG_LEN] = {};
-        printf("ERROR: Maximum number of connections out of acceptable range (%d-%d)\r\n", MIN_CONN_NUM, MAX_CONN_NUM);
+        printf("\033[0;31m");
+        printf("[ERROR] Maximum number of connections out of acceptable range (%d-%d)\r\n", MIN_CONN_NUM, MAX_CONN_NUM);
+        printf("\033[0m");
         return ERR_MAX_CONN_OUT_OF_RANGE;
     }
 
@@ -80,7 +87,7 @@ int main(int argc, char** argv)
 
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
-    int socket_options = SocketOptions(socket_desc, 1, 1, 1, 5, 5); 
+    int socket_options = SocketOptions(socket_desc, 1, 1, 1, 5, 5);
 
     struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
