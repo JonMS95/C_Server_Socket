@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "socket_use.h"
+#include <string.h> // memset, strlen
+#include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
 
 #define ARGV_PORT_IDX           1
 #define ARGV_MAX_CONN_NUM_IDX   2
@@ -9,12 +10,64 @@
 #define MIN_PORT_VALUE          49152
 #define MAX_PORT_VALUE          65535
 
-#define MAX_ERROR_MSG_LEN       100
+#define MAX_ERROR_MSG_LEN   100
 
 #define ERR_NO_PORT_PROVIDED        -1
 #define ERR_PORT_OUT_OF_RANGE       -2
 #define ERR_NO_MAX_CONN_PROVIDED    -3
 #define ERR_MAX_CONN_OUT_OF_RANGE   -4
+
+#define HAS_VALUE_OFF   0
+#define HAS_VALUE_ON    1
+#define MAX_DETAIL_LEN  100
+#define COLON_CHAR      ':'
+
+typedef struct 
+{
+    char opt_char;
+    char detail[MAX_DETAIL_LEN];
+    int has_value;
+    int min_value;
+    int max_value;
+    int assigned_value;
+
+}option_description;
+
+option_description opt_desc[2] =
+{
+    {
+        .opt_char   = 'p',
+        .detail     = "Port",
+        .has_value  = HAS_VALUE_ON,
+        .min_value  = MIN_PORT_VALUE,
+        .max_value  = MAX_PORT_VALUE
+    },
+    {
+        .opt_char   = 'c',
+        .detail     = "Maximum number of connections",
+        .has_value  = HAS_VALUE_ON,
+        .min_value  = MIN_CONN_NUM,
+        .max_value  = MAX_CONN_NUM
+    }
+};
+
+void PreParseOptions(option_description* option_descr, int option_descr_size, char* opt_short)
+{
+    char option_short[option_descr_size * 2 + 1];
+    memset(option_short, 0, sizeof(option_short));
+    
+    for(int i = 0; i < option_descr_size; i++)
+    {
+        option_short[strlen(option_short)] = option_descr[i].opt_char;
+
+        if(option_descr[i].has_value == HAS_VALUE_ON)
+        {
+            option_short[strlen(option_short)] = COLON_CHAR;
+        }
+    }
+
+    strcpy(opt_short, option_short);
+}
 
 /// @brief Parse server's port.
 /// @param argument_list list of argument that is passed through the command line.
@@ -73,6 +126,10 @@ int ParseConnNum(char** argument_list)
 */
 int main(int argc, char** argv)
 {
+    int opt_desc_size = sizeof(opt_desc) / sizeof(opt_desc[0]);
+    char options_short[opt_desc_size * 2 + 1];
+    PreParseOptions(opt_desc, opt_desc_size, options_short);
+
     int server_port = ParsePort(argv);
     if(server_port < 0)
     {
