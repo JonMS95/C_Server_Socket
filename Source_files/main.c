@@ -18,11 +18,9 @@
 
 #define P_OPT_INDEX 0
 #define C_OPT_INDEX 1
-#define T_OPT_INDEX 2
 
 #define P_OPT_DETAIL "Port"
 #define C_OPT_DETAIL "Maximum number of connections"
-#define T_OPT_DETAIL "Just a boolean test option"
 
 option_description opt_desc[] =
 {
@@ -39,11 +37,6 @@ option_description opt_desc[] =
         .has_value  = true,
         .min_value  = MIN_CONN_NUM,
         .max_value  = MAX_CONN_NUM
-    },
-    {
-        .opt_char   = 't'           ,
-        .detail     = T_OPT_DETAIL  ,
-        .has_value  = false ,
     }
 };
 
@@ -54,9 +47,7 @@ int main(int argc, char** argv)
 {
     int opt_desc_size = sizeof(opt_desc) / sizeof(opt_desc[0]);
     char options_short[opt_desc_size * 2 + 1];
-    // PreParseOptions(opt_desc, opt_desc_size, options_short);
 
-    // int parse_arguments = ParseArguments(argc, argv, opt_desc, opt_desc_size, options_short);
     int parse_arguments = GetOptions(argc, argv, opt_desc, opt_desc_size, options_short);
     if(parse_arguments < 0)
     {
@@ -66,7 +57,6 @@ int main(int argc, char** argv)
     
     int server_port = opt_desc[P_OPT_INDEX].assigned_value;
     int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value;
-    bool test_bool_option = opt_desc[T_OPT_INDEX].assigned_value;
 
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
