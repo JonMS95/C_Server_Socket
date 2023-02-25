@@ -5,12 +5,15 @@
 
 #include "../Dependency_files/Header_files/GetOptions_api.h"
 
+#define OPT_PORT_CHAR           'p'
 #define ARGV_PORT_IDX           1
+#define MIN_PORT_VALUE          49152
+#define MAX_PORT_VALUE          65535
+
+#define OPT_CONN_CHAR           'c'
 #define ARGV_MAX_CONN_NUM_IDX   2
 #define MIN_CONN_NUM            1
 #define MAX_CONN_NUM            3
-#define MIN_PORT_VALUE          49152
-#define MAX_PORT_VALUE          65535
 
 #define MAX_ERROR_MSG_LEN   100
 
@@ -25,18 +28,18 @@
 option_description opt_desc[] =
 {
     {
-        .opt_char   = 'p'           ,
+        .opt_char   = OPT_PORT_CHAR ,
         .detail     = P_OPT_DETAIL  ,
-        .has_value  = true  ,
+        .has_value  = true          ,
         .min_value  = MIN_PORT_VALUE,
         .max_value  = MAX_PORT_VALUE,
     },
     {
-        .opt_char   = 'c',
-        .detail     = C_OPT_DETAIL,
-        .has_value  = true,
-        .min_value  = MIN_CONN_NUM,
-        .max_value  = MAX_CONN_NUM
+        .opt_char   = OPT_CONN_CHAR ,
+        .detail     = C_OPT_DETAIL  ,
+        .has_value  = true          ,
+        .min_value  = MIN_CONN_NUM  ,
+        .max_value  = MAX_CONN_NUM  ,
     }
 };
 
