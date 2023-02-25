@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
-    int socket_options = SocketOptions(socket_desc, 1, 1, 1, 5, 5);
+    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
 
     struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
