@@ -9,8 +9,8 @@ exe_main	= Executable_files/main
 shell_dirs	= Shell_files/directories.sh
 shell_test	= Shell_files/test.sh
 
-deps_so_org	= /home/jon/Desktop/scripts/C/C_Get_Options/Dynamic_libraries/libGetOptions.so
-deps_h_org	= /home/jon/Desktop/scripts/C/C_Get_Options/Source_files/GetOptions_api.h
+deps_so_org	= /home/jon/Desktop/scripts/C/C_Get_Options/API/Dynamic_libraries/libGetOptions.so
+deps_h_org	= /home/jon/Desktop/scripts/C/C_Get_Options/API/Header_files/GetOptions_api.h
 
 deps_so_dst	= Dependency_files/Dynamic_libraries/libGetOptions.so
 deps_h_dst	= Dependency_files/Header_files/GetOptions_api.h
@@ -42,7 +42,10 @@ rm_obj:
 	rm -rf Object_files/*
 
 msg:
-	@echo "**************************************************************************************";
+	@echo "**************************************************************************************************"
+	@echo "Don't forget to set the path:"
+	@echo "export LD_LIBRARY_PATH=~/Desktop/scripts/C/C_Socket/Dependency_files/Dynamic_libraries"
+	@echo "**************************************************************************************************"
 
 test:
 	@./$(shell_test)
