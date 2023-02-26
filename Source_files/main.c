@@ -4,6 +4,7 @@
 #include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
 
 #include "../Dependency_files/Header_files/GetOptions_api.h"
+#include "../Dependency_files/Header_files/SeverityLog_api.h"
 
 #define OPT_PORT_CHAR           'p'
 #define ARGV_PORT_IDX           1
@@ -54,7 +55,8 @@ int main(int argc, char** argv)
     int parse_arguments = GetOptions(argc, argv, opt_desc, opt_desc_size, options_short);
     if(parse_arguments < 0)
     {
-        printf("Arguments parsing failed!\r\n");
+        // printf("Arguments parsing failed!\r\n");
+        SeverityLog(SVRTY_LVL_ERR, "Arguments parsing failed!\r\n");
         return ERR_ARG_PARSING_FAILED;
     }
     
