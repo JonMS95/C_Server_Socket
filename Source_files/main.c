@@ -54,7 +54,6 @@ int main(int argc, char** argv)
     int parse_arguments = GetOptions(argc, argv, opt_desc, opt_desc_size, options_short);
     if(parse_arguments < 0)
     {
-        // printf("Arguments parsing failed!\r\n");
         SeverityLog(SVRTY_LVL_ERR, "Arguments parsing failed!\r\n");
         return ERR_ARG_PARSING_FAILED;
     }
