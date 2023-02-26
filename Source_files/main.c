@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>     // memset, strlen
 #include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
