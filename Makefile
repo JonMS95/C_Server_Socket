@@ -39,7 +39,7 @@ clean:
 	rm -rf Object_files/* Executable_files/* Dependency_files/Dynamic_libraries/* Dependency_files/Header_files/*
 
 rm_obj:
-	rm -rf Object_files/*
+	rm -rf Object_files
 
 msg:
 	@echo "**************************************************************************************************"
