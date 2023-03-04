@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <!-- Directory structure -->
+    <Directories>
+        <Object_files/>
+        <Executable_files/>
+        <Dependency_files>
+            <Header_files/>
+            <Dynamic_libraries/>
+        </Dependency_files>
+    </Directories>
+    <!-- API -->
+    <!-- Dependencies -->
+    <Dependencies>
+        <Header_files
+            SeverityHeaderPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Header_files/SeverityLog_api.h"
+            GetOptionsHeaderPath="/home/jon/Desktop/scripts/C/C_Get_Options/API/Header_files/GetOptions_api.h"
+        />
+        <Dynamic_libraries
+            SeveritySOPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Dynamic_libraries/libSeverityLog.so"
+            GetOptionsSOPath="/home/jon/Desktop/scripts/C/C_Get_Options/API/Dynamic_libraries/libGetOptions.so"
+        />
+    </Dependencies>
+</config>
