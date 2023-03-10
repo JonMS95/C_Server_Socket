@@ -1,105 +1,117 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include "socket_use.h"
+#include <string.h>     // memset, strlen
+#include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
 
+#include "../Dependency_files/Header_files/GetOptions_api.h"
+#include "../Dependency_files/Header_files/SeverityLog_api.h"
+
+#define OPT_PORT_CHAR           'p'
 #define ARGV_PORT_IDX           1
-#define ARGV_MAX_CONN_NUM_IDX   2
-#define MIN_CONN_NUM            1
-#define MAX_CONN_NUM            3
 #define MIN_PORT_VALUE          49152
 #define MAX_PORT_VALUE          65535
 
-#define MAX_ERROR_MSG_LEN       100
+#define OPT_CONN_CHAR           'c'
+#define ARGV_MAX_CONN_NUM_IDX   2
+#define MIN_CONN_NUM            1
+#define MAX_CONN_NUM            3
 
-#define ERR_NO_PORT_PROVIDED        -1
-#define ERR_PORT_OUT_OF_RANGE       -2
-#define ERR_NO_MAX_CONN_PROVIDED    -3
-#define ERR_MAX_CONN_OUT_OF_RANGE   -4
+#define MAX_ERROR_MSG_LEN   100
 
-/// @brief Parse server's port.
-/// @param argument_list list of argument that is passed through the command line.
-/// @return < 0 if any error happened, port number otherwise.
-int ParsePort(char** argument_list)
+#define ERR_ARG_PARSING_FAILED  -1
+
+#define P_OPT_INDEX 0
+#define C_OPT_INDEX 1
+
+#define P_OPT_DETAIL "Port"
+#define C_OPT_DETAIL "Maximum number of connections"
+
+option_description opt_desc[] =
 {
-    if(argument_list[ARGV_PORT_IDX] == NULL)
     {
-        printf("\033[0;31m");
-        printf("[ERROR] No port number was provided.\r\n");
-        printf("\033[0m");
-        return ERR_NO_PORT_PROVIDED;
-    }
-    
-    int server_port = atoi(argument_list[ARGV_PORT_IDX]);
-
-    if(server_port < MIN_PORT_VALUE || server_port > MAX_PORT_VALUE)
+        .opt_char   = OPT_PORT_CHAR ,
+        .detail     = P_OPT_DETAIL  ,
+        .has_value  = true          ,
+        .min_value  = MIN_PORT_VALUE,
+        .max_value  = MAX_PORT_VALUE,
+    },
     {
-        printf("\033[0;31m");
-        printf("[ERROR] Address out of acceptable range (%d-%d).\r\n", MIN_PORT_VALUE, MAX_PORT_VALUE);
-        printf("\033[0m");
-        return ERR_PORT_OUT_OF_RANGE;
+        .opt_char   = OPT_CONN_CHAR ,
+        .detail     = C_OPT_DETAIL  ,
+        .has_value  = true          ,
+        .min_value  = MIN_CONN_NUM  ,
+        .max_value  = MAX_CONN_NUM  ,
     }
-
-    return server_port;
-}
-
-/// @brief Parse the maximum number of connections that the server can accept.
-/// @param argument_list list of argument that is passed through the command line.
-/// @return < 0 if any error happened, maximum number of connections admitted by the server otherwise.
-int ParseConnNum(char** argument_list)
-{
-    if(argument_list[ARGV_MAX_CONN_NUM_IDX] == NULL)
-    {
-        printf("\033[0;31m");
-        printf("[ERROR] No maximum number of connections argument provided.\r\n");
-        printf("\033[0m");
-        return ERR_NO_MAX_CONN_PROVIDED;
-    }
-
-    int max_conn_num = atoi(argument_list[ARGV_MAX_CONN_NUM_IDX]);
-
-    if(max_conn_num < 1 || max_conn_num > 3)
-    {
-        printf("\033[0;31m");
-        printf("[ERROR] Maximum number of connections out of acceptable range (%d-%d).\r\n", MIN_CONN_NUM, MAX_CONN_NUM);
-        printf("\033[0m");
-        return ERR_MAX_CONN_OUT_OF_RANGE;
-    }
-
-    return max_conn_num;
-}
+};
 
 /*
 @brief Main function. Program's entry point.
 */
 int main(int argc, char** argv)
 {
-    int server_port = ParsePort(argv);
-    if(server_port < 0)
+    int opt_desc_size = sizeof(opt_desc) / sizeof(opt_desc[0]);
+    char options_short[opt_desc_size * 2 + 1];
+
+    int parse_arguments = GetOptions(argc, argv, opt_desc, opt_desc_size, options_short);
+    if(parse_arguments < 0)
     {
-        exit(EXIT_FAILURE);
+        SeverityLog(SVRTY_LVL_ERR, "Arguments parsing failed!\r\n");
+        return ERR_ARG_PARSING_FAILED;
     }
 
-    int max_conn_num = ParseConnNum(argv);
-    if(max_conn_num < 0)
-    {
-        exit(EXIT_FAILURE);
-    }
+    ShowOptions(opt_desc, opt_desc_size);
+    
+    int server_port = opt_desc[P_OPT_INDEX].assigned_value;
+    int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value;
 
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    if(socket_desc < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "Socket file descriptor creation failed.\r\n");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Socket file descriptor created.\r\n");
 
-    int socket_options = SocketOptions(socket_desc, 1, 1, 1, 5, 5);
+    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
+    if(socket_options < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Successfully set socket options.\r\n");
 
     struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
     int bind_socket = BindSocket(socket_desc, server);
+    if(bind_socket  < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "Socket binding failed.\r\n");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Socket file descriptor binded.\r\n");
 
     int listen = SocketListen(socket_desc, max_conn_num);
+    if(listen < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "Socket listen failed.\r\n");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Socket listen succeed.\r\n");
 
     int new_socket = SocketAccept(socket_desc);
+    if(new_socket < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "Accept failed.\r\n");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Accept succeed.\r\n");
 
     int read = SocketRead(new_socket);
+    if(read <= 0)
+    {
+        SeverityLog(SVRTY_LVL_WNG, "Client disconnected.\r\n");
+    }
 
     int close = CloseSocket(new_socket);
+    if(close < 0)
+    {
+        SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket");
+    }
+    SeverityLog(SVRTY_LVL_INF, "Socket successfully closed.\r\n");
 
     return 0;
 }
