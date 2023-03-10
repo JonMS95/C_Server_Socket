@@ -9,4 +9,4 @@ echo
 echo "*******************************"
 echo "Testing 'main' executable file."
 echo "*******************************"
-./Executable_files/main ${DEFAULT_USER_PORT} ${DEFAULT_CONN_NUM}
+./Executable_files/main -p ${DEFAULT_USER_PORT} -c ${DEFAULT_CONN_NUM}
