@@ -1,8 +1,10 @@
 src_main 	= Source_files/main.c
 src_sckt	= Source_files/socket_use.c
+src_fsm		= Source_files/socket_FSM.c
 
 obj_main	= Object_files/main.o
 obj_sckt	= Object_files/sckt.o
+obj_fsm		= Object_files/fsm.o
 
 exe_main	= Executable_files/main
 
@@ -12,7 +14,7 @@ shell_test	= Shell_files/test.sh
 
 all: all_but_test test
 
-all_but_test: directories clean deps main.o sckt.o main rm_obj msg
+all_but_test: directories clean deps main.o sckt.o fsm.o main rm_obj msg
 
 directories:
 	@./$(shell_dirs)
@@ -26,8 +28,11 @@ main.o: $(src_main)
 sckt.o: $(src_sckt)
 	gcc -c -g -Wall $(src_sckt) -o $(obj_sckt)
 
+fsm.o: $(src_fsm)
+	gcc -c -g -Wall $(src_fsm) -o $(obj_fsm)
+
 main:
-	gcc -g -Wall $(obj_main) $(obj_sckt) -LDependency_files/Dynamic_libraries -lGetOptions -lSeverityLog -o $(exe_main)
+	gcc -g -Wall $(obj_main) $(obj_sckt) $(obj_fsm) -LDependency_files/Dynamic_libraries -lGetOptions -lSeverityLog -o $(exe_main)
 
 clean:
 	rm -rf Object_files/* Executable_files/* Dependency_files/Dynamic_libraries/* Dependency_files/Header_files/*

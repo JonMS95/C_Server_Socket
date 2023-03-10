@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>     // memset, strlen
 #include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
+#include "socket_FSM.h"
 
 #include "../Dependency_files/Header_files/GetOptions_api.h"
 #include "../Dependency_files/Header_files/SeverityLog_api.h"
@@ -59,59 +60,61 @@ int main(int argc, char** argv)
     }
 
     ShowOptions(opt_desc, opt_desc_size);
-    
+
     int server_port = opt_desc[P_OPT_INDEX].assigned_value;
     int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value;
 
-    int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
-    if(socket_desc < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "Socket file descriptor creation failed.\r\n");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Socket file descriptor created.\r\n");
+    SocketFSM(server_port, max_conn_num);
 
-    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
-    if(socket_options < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Successfully set socket options.\r\n");
+    // int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
+    // if(socket_desc < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "Socket file descriptor creation failed.\r\n");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Socket file descriptor created.\r\n");
 
-    struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
+    // int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
+    // if(socket_options < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Successfully set socket options.\r\n");
 
-    int bind_socket = BindSocket(socket_desc, server);
-    if(bind_socket  < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "Socket binding failed.\r\n");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Socket file descriptor binded.\r\n");
+    // struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
-    int listen = SocketListen(socket_desc, max_conn_num);
-    if(listen < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "Socket listen failed.\r\n");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Socket listen succeed.\r\n");
+    // int bind_socket = BindSocket(socket_desc, server);
+    // if(bind_socket  < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "Socket binding failed.\r\n");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Socket file descriptor binded.\r\n");
 
-    int new_socket = SocketAccept(socket_desc);
-    if(new_socket < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "Accept failed.\r\n");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Accept succeed.\r\n");
+    // int listen = SocketListen(socket_desc, max_conn_num);
+    // if(listen < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "Socket listen failed.\r\n");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Socket listen succeed.\r\n");
 
-    int read = SocketRead(new_socket);
-    if(read <= 0)
-    {
-        SeverityLog(SVRTY_LVL_WNG, "Client disconnected.\r\n");
-    }
+    // int new_socket = SocketAccept(socket_desc);
+    // if(new_socket < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "Accept failed.\r\n");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Accept succeed.\r\n");
 
-    int close = CloseSocket(new_socket);
-    if(close < 0)
-    {
-        SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket");
-    }
-    SeverityLog(SVRTY_LVL_INF, "Socket successfully closed.\r\n");
+    // int read = SocketRead(new_socket);
+    // if(read <= 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_WNG, "Client disconnected.\r\n");
+    // }
+
+    // int close = CloseSocket(new_socket);
+    // if(close < 0)
+    // {
+    //     SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket");
+    // }
+    // SeverityLog(SVRTY_LVL_INF, "Socket successfully closed.\r\n");
 
     return 0;
 }
