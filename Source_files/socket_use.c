@@ -8,6 +8,7 @@
 #include <string.h>         // strcpy
 #include <netinet/tcp.h>    // SO_KEEPALIVE
 #include "socket_use.h"
+#include "../Dependency_files/Header_files/SeverityLog_api.h" // Severity Log.
 
 /* Private constants */
 
@@ -26,16 +27,7 @@
 /// @return  a file descriptor > 0 number if the socket descriptor was succesfully created, -1 if any error happened. 
 int CreateSocketDescriptor(int domain, int type, int protocol)
 {
-    int socket_desc = socket(domain, type, protocol);
-
-    if(socket_desc < 0)
-    {
-        perror("Socket file descriptor creation failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Socket file descriptor created.\r\n");
-
-    return socket_desc;
+    return socket(domain, type, protocol);
 }
 
 /// @brief Set socket options.
@@ -52,15 +44,9 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
 
     socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address, sizeof(reuse_address    ));
     socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port   , sizeof(reuse_port       ));
-    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
-    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
-    socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
-
-    if(socket_options < 0)
-    {
-        perror("Failed to set socket options");
-    }
-    printf("Successfully set socket options.\r\n");
+    // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
+    // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
+    // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
 
     return socket_options;
 }
@@ -91,12 +77,6 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
     // Bind: attach the socket descriptor to a particular IP and port.
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int bind_socket = bind(socket_desc, (struct sockaddr*)&server, file_desc_len);
-    if(bind_socket  < 0)
-    {
-        perror("Socket binding failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Socket file descriptor binded.\r\n");
 
     return bind_socket;
 }
@@ -108,12 +88,6 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
 int SocketListen(int socket_desc, int connections_number)
 {
     int socket_listen = listen(socket_desc, connections_number);
-
-    if(socket_listen < 0)
-    {
-        perror("Socket listen failed");
-    }
-    printf("Socket listen succeed.\r\n");
 
     return socket_listen;
 }
@@ -128,15 +102,9 @@ int SocketAccept(int socket_desc)
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    if(new_socket < 0)
-    {
-        perror("Accept failed");
-    }
-    printf("\033[0;32m");
-    printf("Connection accepted. Client's IP address: %s\r\n", inet_ntoa(client.sin_addr));
-    printf("\033[0m");
+    SeverityLog(SVRTY_LVL_INF, "Connection accepted. Client's IP address: %s\r\n", inet_ntoa(client.sin_addr));
 
-    int keep_alive = 1;
+    int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
     // Send a message to the client as soon as it is accepted.
@@ -174,9 +142,6 @@ int SocketRead(int new_socket)
         }
         else if(read_from_socket <= 0)
         {
-            printf("\033[0;31m");
-            printf("[ERROR] Client disconnected.\r\n");
-            printf("\033[0m");
             break;
         }
     }
@@ -191,12 +156,6 @@ int CloseSocket(int new_socket)
 {
     // Close the socket.
     int close_socket = close(new_socket);
-
-    if(close_socket < 0)
-    {
-        perror("An error happened while closing the socket");
-    }
-    printf("Socket successfully closed.\r\n");
 
     return close_socket;
 }
