@@ -194,7 +194,9 @@ int SocketFSM(int server_port, int max_conn_num)
 
             case ACCEPT:
             {
-                if(SocketStateAccept(socket_desc) < 0)
+                new_socket = SocketStateAccept(socket_desc);
+                
+                if(new_socket < 0)
                 {
                     socket_fsm = LISTEN;
                 }
@@ -207,7 +209,7 @@ int SocketFSM(int server_port, int max_conn_num)
 
             case READ:
             {
-                if(SocketStateRead(new_socket) < 0)
+                if(SocketStateRead(new_socket) <= 0)
                 {
                     socket_fsm = LISTEN;
                 }
