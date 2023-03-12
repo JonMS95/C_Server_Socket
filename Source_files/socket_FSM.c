@@ -1,7 +1,9 @@
 #include "socket_use.h"
-#include "../Dependency_files/Header_files/SeverityLog_api.h"
 #include "socket_FSM.h"
+#include "../Dependency_files/Header_files/SeverityLog_api.h"
 
+/// @brief Create socket descriptor.
+/// @return < 0 if it failed to create the socket.
 int SocketStateCreate()
 {
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
@@ -18,6 +20,9 @@ int SocketStateCreate()
     return socket_desc;
 }
 
+/// @brief Set socket options.
+/// @param socket_desc Socket file descriptor.
+/// @return < 0 if it failed to set options.
 int SocketStateOptions(int socket_desc)
 {
     int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
@@ -34,6 +39,10 @@ int SocketStateOptions(int socket_desc)
     return socket_options;
 }
 
+/// @brief Bind socket to an IP address and port.
+/// @param socket_desc Socket file descriptor.
+/// @param server_port The port which is going to be used to listen to incoming connections.
+/// @return < 0 if it failed to bind.
 int SocketStateBind(int socket_desc, int server_port)
 {
     struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
@@ -52,6 +61,10 @@ int SocketStateBind(int socket_desc, int server_port)
     return bind_socket;
 }
 
+/// @brief Listen to incoming connections.
+/// @param socket_desc Socket file descriptor.
+/// @param max_conn_num Maximum connections number.
+/// @return < 0 if it failed to listen.
 int SocketStateListen(int socket_desc, int max_conn_num)
 {
     int listen = SocketListen(socket_desc, max_conn_num);
@@ -68,6 +81,9 @@ int SocketStateListen(int socket_desc, int max_conn_num)
     return listen;
 }
 
+/// @brief Accept an incoming connection.
+/// @param socket_desc Socket file descriptor.
+/// @return < 0 if it failed to accept the connection.
 int SocketStateAccept(int socket_desc)
 {
     int new_socket = SocketAccept(socket_desc);
@@ -84,6 +100,9 @@ int SocketStateAccept(int socket_desc)
     return new_socket;
 }
 
+/// @brief Read data received in the socket.
+/// @param new_socket Socket file descriptor.
+/// @return <= 0 if it failed to read.
 int SocketStateRead(int new_socket)
 {
     int read = SocketRead(new_socket);
@@ -96,6 +115,9 @@ int SocketStateRead(int new_socket)
     return read;
 }
 
+/// @brief Close socket.
+/// @param new_socket Socket file descriptor.
+/// @return < 0 if it failed to close the socket.
 int SocketStateClose(int new_socket)
 {
     int close = CloseSocket(new_socket);
@@ -112,23 +134,10 @@ int SocketStateClose(int new_socket)
     return close;    
 }
 
-    // CREATE_FD = 0   ,
-    // OPTIONS         ,
-    // BIND            ,
-    // LISTEN          ,
-    // ACCEPT          ,
-    // READ            ,
-    // CLOSE           ,
-
-// int SocketStateCreate()
-// int SocketStateOptions(int socket_desc)
-// int SocketStateBind(int socket_desc, int server_port)
-// int SocketStateListen(int socket_desc, int max_conn_num)
-// int SocketStateAccept(int socket_desc)
-// int SocketStateRead(int new_socket)
-// int SocketStateClose(int new_socket)
-
-
+/// @brief Socket Finite State Machine (FSM).
+/// @param server_port Port number which the socket is going to be listening to.
+/// @param max_conn_num Maximum amount of allowed connections.
+/// @return < 0 if it failed.
 int SocketFSM(int server_port, int max_conn_num)
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
