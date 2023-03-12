@@ -231,6 +231,7 @@ int SocketFSM(int server_port, int max_conn_num)
 
             case CLOSE:
             {
+                // By now, this state should not be reached.
                 if(SocketStateClose(new_socket) < 0)
                 {
                     socket_fsm = CLOSE;
