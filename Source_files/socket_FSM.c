@@ -24,7 +24,7 @@ int SocketStateOptions(int socket_desc)
 
     if(socket_options < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options");
+        SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options.\r\n");
     }
     else
     {
@@ -102,7 +102,7 @@ int SocketStateClose(int new_socket)
     
     if(close < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket");
+        SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket.\r\n");
     }
     else
     {
