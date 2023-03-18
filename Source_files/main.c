@@ -29,18 +29,22 @@
 option_description opt_desc[] =
 {
     {
-        .opt_char   = OPT_PORT_CHAR ,
-        .detail     = P_OPT_DETAIL  ,
-        .has_value  = true          ,
-        .min_value  = MIN_PORT_VALUE,
-        .max_value  = MAX_PORT_VALUE,
+        .opt_char           = OPT_PORT_CHAR         ,
+        .detail             = P_OPT_DETAIL          ,
+        .has_value          = false                 ,
+        .var_type           = GETOPT_VAR_TYPE_INT   ,
+        .min_value.integer  = MIN_PORT_VALUE        ,
+        .max_value.integer  = MAX_PORT_VALUE        ,
+        .default_value      = 50000                 ,
     },
     {
-        .opt_char   = OPT_CONN_CHAR ,
-        .detail     = C_OPT_DETAIL  ,
-        .has_value  = true          ,
-        .min_value  = MIN_CONN_NUM  ,
-        .max_value  = MAX_CONN_NUM  ,
+        .opt_char           = OPT_CONN_CHAR         ,
+        .detail             = C_OPT_DETAIL          ,
+        .has_value          = false                 ,
+        .var_type           = GETOPT_VAR_TYPE_INT   ,
+        .min_value.integer  = MIN_CONN_NUM          ,
+        .max_value.integer  = MAX_CONN_NUM          ,
+        .default_value      = 1                     ,
     }
 };
 
@@ -61,8 +65,8 @@ int main(int argc, char** argv)
 
     ShowOptions(opt_desc, opt_desc_size);
 
-    int server_port = opt_desc[P_OPT_INDEX].assigned_value;
-    int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value;
+    int server_port = opt_desc[P_OPT_INDEX].assigned_value.integer;
+    int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value.integer;
 
     SocketFSM(server_port, max_conn_num);
 
