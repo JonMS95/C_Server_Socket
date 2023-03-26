@@ -6,67 +6,60 @@
 #include "../Dependency_files/Header_files/GetOptions_api.h"
 #include "../Dependency_files/Header_files/SeverityLog_api.h"
 
-#define OPT_PORT_CHAR           'p'
-#define ARGV_PORT_IDX           1
-#define MIN_PORT_VALUE          49152
-#define MAX_PORT_VALUE          65535
+#define PORT_OPT_CHAR       'p'
+#define PORT_OPT_DETAIL     "Port"
+#define PORT_MIN_VALUE      "49152"
+#define PORT_MAX_VALUE      "65535"
+#define PORT_DEFAULT_VALUE  "50000"
 
-#define OPT_CONN_CHAR           'c'
-#define ARGV_MAX_CONN_NUM_IDX   2
-#define MIN_CONN_NUM            1
-#define MAX_CONN_NUM            3
+#define CONN_OPT_CHAR       'c'
+#define CONN_OPT_DETAIL     "Maximum number of connections"
+#define CONN_MIN_VALUE      "1"
+#define CONN_MAX_VALUE      "3"
+#define CONN_DEFAULT_VALUE  "1"
 
 #define MAX_ERROR_MSG_LEN   100
-
-#define ERR_ARG_PARSING_FAILED  -1
-
-#define P_OPT_INDEX 0
-#define C_OPT_INDEX 1
-
-#define P_OPT_DETAIL "Port"
-#define C_OPT_DETAIL "Maximum number of connections"
-
-option_description opt_desc[] =
-{
-    {
-        .opt_char           = OPT_PORT_CHAR         ,
-        .detail             = P_OPT_DETAIL          ,
-        .has_value          = false                 ,
-        .var_type           = GETOPT_VAR_TYPE_INT   ,
-        .min_value.integer  = MIN_PORT_VALUE        ,
-        .max_value.integer  = MAX_PORT_VALUE        ,
-        .default_value      = 50000                 ,
-    },
-    {
-        .opt_char           = OPT_CONN_CHAR         ,
-        .detail             = C_OPT_DETAIL          ,
-        .has_value          = false                 ,
-        .var_type           = GETOPT_VAR_TYPE_INT   ,
-        .min_value.integer  = MIN_CONN_NUM          ,
-        .max_value.integer  = MAX_CONN_NUM          ,
-        .default_value      = 1                     ,
-    }
-};
 
 /*
 @brief Main function. Program's entry point.
 */
 int main(int argc, char** argv)
 {
-    int opt_desc_size = sizeof(opt_desc) / sizeof(opt_desc[0]);
-    char options_short[opt_desc_size * 2 + 1];
+    int set_config_opt_port =   AddOption(  PORT_OPT_CHAR       ,
+                                            PORT_OPT_DETAIL     ,
+                                            GETOPT_VAR_TYPE_INT ,
+                                            PORT_MIN_VALUE      ,
+                                            PORT_MAX_VALUE      ,
+                                            PORT_DEFAULT_VALUE  );
 
-    int parse_arguments = GetOptions(argc, argv, opt_desc, opt_desc_size, options_short);
+    if(set_config_opt_port < 0)
+    {
+        return set_config_opt_port;
+    }
+
+    int set_config_opt_conn =   AddOption(  CONN_OPT_CHAR       ,
+                                            CONN_OPT_DETAIL     ,
+                                            GETOPT_VAR_TYPE_INT ,
+                                            CONN_MIN_VALUE      ,
+                                            CONN_MAX_VALUE      ,
+                                            CONN_DEFAULT_VALUE  );
+
+    if(set_config_opt_conn < 0)
+    {
+        return set_config_opt_conn;
+    }
+
+    int parse_arguments = GetOptions(argc, argv);
     if(parse_arguments < 0)
     {
         SeverityLog(SVRTY_LVL_ERR, "Arguments parsing failed!\r\n");
-        return ERR_ARG_PARSING_FAILED;
+        return parse_arguments;
     }
 
-    ShowOptions(opt_desc, opt_desc_size);
+    ShowOptions();
 
-    int server_port = opt_desc[P_OPT_INDEX].assigned_value.integer;
-    int max_conn_num = opt_desc[C_OPT_INDEX].assigned_value.integer;
+    int server_port = GetIntegerOptionValue(PORT_OPT_CHAR);
+    int max_conn_num = GetIntegerOptionValue(CONN_OPT_CHAR);
 
     SocketFSM(server_port, max_conn_num);
 
