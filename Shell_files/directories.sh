@@ -11,6 +11,10 @@ fi
 
 xmlstarlet el $PATH_CONFIG | grep $DIR_KEYWORD >> $PATH_DIR_LIST
 
+echo "********************"
+echo "Creating directories"
+echo "********************"
+
 while read -r line
 do
     new_dir=${line/#$DIR_PREFIX}
