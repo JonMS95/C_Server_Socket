@@ -14,11 +14,11 @@
     <Dependencies>
         <Header_files
             SeverityHeaderPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Header_files/SeverityLog_api.h"
-            GetOptionsHeaderPath="/home/jon/Desktop/scripts/C/C_Get_Options/API/Header_files/GetOptions_api.h"
+            GetOptionsHeaderPath="/home/jon/Desktop/scripts/C/C_Arg_Parse/API/Header_files/GetOptions_api.h"
         />
         <Dynamic_libraries
             SeveritySOPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Dynamic_libraries/libSeverityLog.so"
-            GetOptionsSOPath="/home/jon/Desktop/scripts/C/C_Get_Options/API/Dynamic_libraries/libGetOptions.so"
+            GetOptionsSOPath="/home/jon/Desktop/scripts/C/C_Arg_Parse/API/Dynamic_libraries/libGetOptions.so"
         />
     </Dependencies>
 </config>
