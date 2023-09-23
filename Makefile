@@ -8,9 +8,14 @@ obj_fsm		= Object_files/fsm.o
 
 exe_main	= Executable_files/main
 
-shell_dirs	= Shell_files/directories.sh
-shell_deps	= Shell_files/get_deps.sh
-shell_test	= Shell_files/test.sh
+shell_dirs		= Shell_files/directories.sh
+shell_sym_links	= Shell_files/sym_links.sh
+shell_test		= Shell_files/test.sh
+
+p_deps	= config/Dependencies/Header_files
+P_deps	= Dependency_files/Header_files
+s_deps	= config/Dependencies/Dynamic_libraries
+S_deps	= Dependency_files/Dynamic_libraries
 
 all: all_but_test test
 
@@ -20,7 +25,7 @@ directories:
 	@./$(shell_dirs)
 
 deps:
-	@./$(shell_deps)
+	@bash $(shell_sym_links) -p $(p_deps) -P $(P_deps) -s $(s_deps) -S $(S_deps)
 
 main.o: $(src_main)
 	gcc -c -g -Wall $(src_main) -o $(obj_main)
