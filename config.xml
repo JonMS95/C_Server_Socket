@@ -9,6 +9,12 @@
             <Dynamic_libraries/>
         </Dependency_files>
     </Directories>
+    
+    <!-- Common shell files location -->
+    <Common_shell_files
+        PathToShellFiles="/home/jon/Desktop/scripts/C/C_Common_shell_files"
+    />
+
     <!-- API -->
     <!-- Dependencies -->
     <Dependencies>
