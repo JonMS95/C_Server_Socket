@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
+    <Project_data
+        version_major="1"
+        version_minor="0"
+        version_mode="DEBUG"
+        URL="https://github.com/JonMS95/C_Socket"
+        languages="C"
+        type="library"
+    />
     <!-- Directory structure -->
     <Directories>
         <Object_files/>
@@ -12,19 +20,29 @@
     
     <!-- Common shell files location -->
     <Common_shell_files
-        PathToShellFiles="/home/jon/Desktop/scripts/C/C_Common_shell_files"
+        version_major="1"
+        version_minor="0"
+        version_mode="DEBUG"
+        local_path="~/Desktop/scripts/C/C_Common_shell_files"
+        URL="https://github.com/JonMS95/C_Common_shell_files"
     />
 
     <!-- API -->
     <!-- Dependencies -->
-    <Dependencies>
-        <Header_files
-            SeverityHeaderPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Header_files/SeverityLog_api.h"
-            GetOptionsHeaderPath="/home/jon/Desktop/scripts/C/C_Arg_Parse/API/Header_files/GetOptions_api.h"
+    <Dependencies Dest="Dependency_files">
+        <C_Severity_Log
+            version_major="1"
+            version_minor="0"
+            version_mode="DEBUG"
+            local_path="~/Desktop/scripts/C/C_Severity_Log"
+            URL="https://github.com/JonMS95/C_Severity_Log"
         />
-        <Dynamic_libraries
-            SeveritySOPath="/home/jon/Desktop/scripts/C/C_Severity_Log/API/Dynamic_libraries/libSeverityLog.so"
-            GetOptionsSOPath="/home/jon/Desktop/scripts/C/C_Arg_Parse/API/Dynamic_libraries/libGetOptions.so"
+        <C_Arg_Parse
+            version_major="1"
+            version_minor="1"
+            version_mode="DEBUG"
+            local_path="~/Desktop/scripts/C/test_versions/C_Arg_Parse"
+            URL="https://github.com/JonMS95/C_Arg_Parse"
         />
     </Dependencies>
 </config>
