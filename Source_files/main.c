@@ -3,8 +3,8 @@
 #include "socket_use.h" // IF_ANET, SOCK_STREAM, ...
 #include "socket_FSM.h"
 
-#include "../Dependency_files/Header_files/GetOptions_api.h"
-#include "../Dependency_files/Header_files/SeverityLog_api.h"
+#include "GetOptions_api.h"
+#include "SeverityLog_api.h"
 
 /********** Private constants **********/
 /***************************************/

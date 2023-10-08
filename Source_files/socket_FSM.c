@@ -1,6 +1,6 @@
 #include "socket_use.h"
 #include "socket_FSM.h"
-#include "../Dependency_files/Header_files/SeverityLog_api.h"
+#include "SeverityLog_api.h"
 
 /// @brief Create socket descriptor.
 /// @return < 0 if it failed to create the socket.
