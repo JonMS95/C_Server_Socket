@@ -7,8 +7,8 @@
 #include <unistd.h>         // Write socket.
 #include <string.h>         // strcpy
 #include <netinet/tcp.h>    // SO_KEEPALIVE
-#include "socket_use.h"
-#include "../Dependency_files/Header_files/SeverityLog_api.h" // Severity Log.
+#include "ServerSocketUse.h"
+#include "SeverityLog_api.h" // Severity Log.
 
 /* Private constants */
 
