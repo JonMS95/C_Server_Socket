@@ -30,22 +30,23 @@ TEST_SO_DEPS_DIR		:= Tests/$(SO_DEPS_DIR)
 
 #######################################
 # Library variables
-src_main 	= Source_files/main.c
-src_sckt	= Source_files/socket_use.c
-src_fsm		= Source_files/socket_FSM.c
+src_srv_sckt	= Source_files/ServerSocketUse.c
+src_fsm			= Source_files/ServerSocketFSM.c
 
-obj_main	= Object_files/main.o
-obj_sckt	= Object_files/sckt.o
-obj_fsm		= Object_files/fsm.o
+so_srv_sckt	= Dynamic_libraries/libServerSocket.so
 
-exe_main	= Executable_files/main
+src_main	= Tests/Source_files/main.c
+
+exe_main	= Tests/Executable_files/main
+
+d_test_deps	= config/Tests/Dependencies/
 #######################################
 
 #####################################################################
 # Compound rules
-exe: clean ln_sh_files directories deps main.o sckt.o fsm.o main
+exe: clean ln_sh_files directories deps srv_sckt.so api
 
-test: test_exe
+test: clean_test directories test_deps test_main test_rm_obj test_exe
 #####################################################################
 
 ##############################################################################################################
@@ -62,21 +63,31 @@ directories:
 deps:
 	@bash $(shell_sym_links)
 
-main.o: $(src_main)
-	gcc $(DEBUG_INFO) -I$(HEADER_DEPS_DIR) -c $(src_main) -o $(obj_main)
+srv_sckt.so:
+	gcc $(DEBUG_INFO) -I$(HEADER_DEPS_DIR) -fPIC -shared $(src_srv_sckt) $(src_fsm) -o $(so_srv_sckt)
 
-sckt.o: $(src_sckt)
-	gcc $(DEBUG_INFO) -I$(HEADER_DEPS_DIR) -c $(src_sckt) -o $(obj_sckt)
+api:
+	@bash $(shell_gen_versions)
 
-fsm.o: $(src_fsm)
-	gcc $(DEBUG_INFO) -I$(HEADER_DEPS_DIR) -c $(src_fsm) -o $(obj_fsm)
-
-main:
-	gcc $(DEBUG_INFO) -I$(HEADER_DEPS_DIR) $(obj_main) $(obj_sckt) $(obj_fsm) -L$(SO_DEPS_DIR) -lGetOptions -lSeverityLog -o $(exe_main)
+# Use this one carefully. Non-tagged versions will be impossible to recover if used.
+clean_api:
+	rm -rf API
 ##############################################################################################################
 
 ######################################################################################################################
 # Test Rules
+clean_test:
+	rm -rf Tests/Dependency_files Tests/Object_files Tests/Executable_files
+
+test_deps:
+	@bash $(shell_sym_links) -d $(d_test_deps)
+
+test_main:
+	gcc $(DEBUG_INFO) -I$(TEST_HEADER_DEPS_DIR) $(src_main) -L$(TEST_SO_DEPS_DIR) -lGetOptions -lSeverityLog -lServerSocket -o $(exe_main)
+
+test_rm_obj:
+	rm -rf Tests/Object_files
+
 test_exe:
 	@./$(shell_test)
 ######################################################################################################################
