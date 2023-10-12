@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <string.h>     // memset, strlen
-// #include "ServerSocketUse.h" // IF_ANET, SOCK_STREAM, ...
-// #include "ServerSocketFSM.h"
-#include "ServerSocket_api.h"
 
+#include "ServerSocket_api.h"
 #include "GetOptions_api.h"
 #include "SeverityLog_api.h"
 
