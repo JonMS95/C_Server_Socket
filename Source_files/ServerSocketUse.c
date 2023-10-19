@@ -12,8 +12,7 @@
 
 /* Private constants */
 
-#define CONN_NUM        3       // Maximum number of concurrent connections that the socket may attend to.
-#define IP_ADDR_SIZE    15      // IP address string size.
+#define IPV4_ADDR_SIZE  15      // IP address string size.
 #define GREETING_SIZE   100
 #define RX_BUFFER_SIZE  256     // RX buffer size.
 
@@ -108,7 +107,7 @@ int SocketAccept(int socket_desc)
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
     // Send a message to the client as soon as it is accepted.
-    char client_ip_addr[IP_ADDR_SIZE + 1];
+    char client_ip_addr[IPV4_ADDR_SIZE + 1];
     memset(client_ip_addr, 0, sizeof(client_ip_addr));
     strcpy(client_ip_addr, inet_ntoa(client.sin_addr));
 
