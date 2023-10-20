@@ -1,5 +1,5 @@
-#ifndef SOCKET_FSM_H
-#define SOCKET_FSM_H
+#ifndef SERVER_SOCKET_FSM_H
+#define SERVER_SOCKET_FSM_H
 
 #include "ServerSocket_api.h"
 

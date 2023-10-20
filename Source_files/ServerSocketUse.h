@@ -1,5 +1,5 @@
-#ifndef SOCKET_USE_H
-#define SOCKET_USE_H
+#ifndef SERVER_SOCKET_USE_H
+#define SERVER_SOCKET_USE_H
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
