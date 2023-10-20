@@ -159,8 +159,10 @@ directories:
 deps:
 	@bash $(SHELL_SYM_LINKS)
 
-so_lib:
+$(LIB_SO): $(LIB_SOURCES)
 	$(COMP) $(FLAGS) -I$(HEADER_DEPS_DIR) -fPIC -shared $(LIB_SOURCES) -o $(LIB_SO)
+
+so_lib: $(LIB_SO)
 
 api:
 	@bash $(SHELL_GEN_VERSIONS)
@@ -178,8 +180,10 @@ clean_test:
 test_deps:
 	@bash $(SHELL_SYM_LINKS) -d $(D_TEST_DEPS)
 
-test_main:
+$(TEST_EXE_MAIN): $(TEST_SRC_MAIN) $(wildcard $(TEST_SO_DEPS_DIR)/*.so) $(wildcard $(TEST_HEADER_DEPS_DIR)/*.h)
 	$(COMP) $(FLAGS) -I$(TEST_HEADER_DEPS_DIR) $(TEST_SRC_MAIN) -L$(TEST_SO_DEPS_DIR) $(addprefix -l,$(patsubst lib%.so,%,$(shell ls $(TEST_SO_DEPS_DIR)))) -o $(TEST_EXE_MAIN)
+
+test_main: $(TEST_EXE_MAIN)
 
 test_exe:
 	@./$(LOCAL_SHELL_TEST)
