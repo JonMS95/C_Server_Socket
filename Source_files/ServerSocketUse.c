@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <sys/socket.h>     // socket, bind, listen accept functions.
-#include <stdlib.h>         // EXIT_FAILURE
 #include <arpa/inet.h>      // sockaddr_in, inet_addr
 #include <unistd.h>         // Write socket.
 #include <string.h>         // strcpy
