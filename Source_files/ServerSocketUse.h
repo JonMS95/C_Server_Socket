@@ -11,6 +11,7 @@ int BindSocket(int socket_desc, struct sockaddr_in server);
 int SocketListen(int socket_desc, int connections_number);
 int SocketAccept(int socket_desc);
 int SocketRead(int new_socket);
+void SocketDisplayOnConsole(int bytes_read, char* rx_buffer);
 int CloseSocket(int new_socket);
 
 #endif

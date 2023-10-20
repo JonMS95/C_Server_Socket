@@ -136,7 +136,7 @@ int SocketRead(int new_socket)
         // Read data from buffer.
         if (read_from_socket > 0)
         {
-            printf("Data read from RX buffer: <%s>\r\n", rx_buffer);
+            SocketDisplayOnConsole(read_from_socket, rx_buffer);
             memset(rx_buffer, 0, read_from_socket);
         }
         else if(read_from_socket <= 0)
@@ -146,6 +146,18 @@ int SocketRead(int new_socket)
     }
 
     return read_from_socket;
+}
+
+/// @brief Diplays on console the amount of bytes provided on condition they are not equal to a LF or CRLF character.
+/// @param bytes_read Number of bytes read by the buffer.
+/// @param rx_buffer Reception buffer from which the function is meant to read "bytes_read" bytes.
+void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
+{
+    if( !((bytes_read == (strlen("\n"))   && strcmp(rx_buffer, "\n")   == 0) ||
+          (bytes_read == (strlen("\r\n")) && strcmp(rx_buffer, "\r\n") == 0)))
+    {
+        LOG_INF("Data read from RX buffer: <%s>", rx_buffer);
+    }
 }
 
 /// @brief Closes the socket.
