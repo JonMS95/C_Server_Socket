@@ -32,7 +32,7 @@ int CreateSocketDescriptor(int domain, int type, int protocol)
 /// @param socket_desc Previously created socket descriptor.
 /// @param reuse_address 1 if the address is meant to be forcefully used again, 0 otherwise.
 /// @param reuse_port 1 if the port is meant to be forcefully used again, 0 otherwise.
-/// @param keep_idle defines heartbeat frequency when it's receiving packets ACK packets from the other side (server is continuouly sending empty packets).
+/// @param keep_idle defines heartbeat frequency when it's receiving ACK packets from the other side (server is continuously sending empty packets).
 /// @param keep_counter dictates how many unanswered heartbeats will indicate a broken connection.
 /// @param keep_interval defines heartbeat frequency when there is no answer from the client's side.
 /// @return < 0 if any error happened.
@@ -58,8 +58,8 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
 {
     // Prepare the sockaddr_in structure for the binding process.
     struct sockaddr_in server;
-    server.sin_family = AF_INET;            // IPv4.
-    server.sin_addr.s_addr = INADDR_ANY;    // Any address is allowed to connect to the socket.
+    server.sin_family = address_family;     // IPv4.
+    server.sin_addr.s_addr = allowed_IPs;   // Any address is allowed to connect to the socket.
     server.sin_port = htons(listen_port);   // The htons() function makes sure that numbers are stored in memory
                                             // in network byte order, which is with the most significant byte first.
 
@@ -100,7 +100,7 @@ int SocketAccept(int socket_desc)
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    SeverityLog(SVRTY_LVL_INF, "Connection accepted. Client's IP address: %s\r\n", inet_ntoa(client.sin_addr));
+    LOG_INF("Connection accepted. Client's IP address: %s", inet_ntoa(client.sin_addr));
 
     int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
