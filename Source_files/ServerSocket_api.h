@@ -5,7 +5,13 @@
 extern "C" {
 #endif
 
+/*************************************/
+/******** Function prototypes ********/
+/*************************************/
+
 int ServerSocketRun(int server_port, int max_conn_num);
+
+/*************************************/
 
 #ifdef __cplusplus
 }
