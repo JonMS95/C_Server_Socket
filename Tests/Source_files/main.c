@@ -1,10 +1,14 @@
-#include <stdlib.h>
-#include <string.h>     // memset, strlen
+/************************************/
+/******** Include statements ********/
+/************************************/
 
 #include "ServerSocket_api.h"
 #include "GetOptions_api.h"
 #include "SeverityLog_api.h"
 
+/************************************/
+
+/***************************************/
 /********** Private constants **********/
 /***************************************/
 
@@ -12,7 +16,7 @@
 
 #define PORT_OPT_CHAR       'p'
 #define PORT_OPT_LONG       "Port"
-#define PORT_OPT_DETAIL     "Range of acceptable port numbers"
+#define PORT_OPT_DETAIL     "Range of acceptable port numbers."
 #define PORT_MIN_VALUE      49152
 #define PORT_MAX_VALUE      65535
 #define PORT_DEFAULT_VALUE  50000
@@ -21,7 +25,7 @@
 
 #define CLIENTS_OPT_CHAR        'c'
 #define CLIENTS_OPT_LONG        "Clients"
-#define CLIENTS_OPT_DETAIL      "Maximum number of clients (sequential)"
+#define CLIENTS_OPT_DETAIL      "Maximum number of clients."
 #define CLIENTS_MIN_VALUE       1
 #define CLIENTS_MAX_VALUE       3
 #define CLIENTS_DEFAULT_VALUE   1
