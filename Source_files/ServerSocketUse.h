@@ -1,8 +1,28 @@
 #ifndef SERVER_SOCKET_USE_H
 #define SERVER_SOCKET_USE_H
 
+/************************************/
+/******** Include statements ********/
+/************************************/
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
+
+/************************************/
+
+/***********************************/
+/******** Define statements ********/
+/***********************************/
+
+#define SERVER_SOCKET_CLIENT_ACCEPTED       "Connection accepted. Client's IP address: <%s>"
+#define SERVER_SOCKET_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
+#define SERVER_SOCKET_DATA_READ_FROM_CLIENT "Data read from RX buffer: <%s>"
+
+/***********************************/
+
+/*************************************/
+/******** Function prototypes ********/
+/*************************************/
 
 int CreateSocketDescriptor(int domain, int type, int protocol);
 int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_idle, int keep_counter, int keep_interval);
@@ -13,5 +33,7 @@ int SocketAccept(int socket_desc);
 int SocketRead(int new_socket);
 void SocketDisplayOnConsole(int bytes_read, char* rx_buffer);
 int CloseSocket(int new_socket);
+
+/*************************************/
 
 #endif

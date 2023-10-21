@@ -1,21 +1,30 @@
-/* Include files */
+/************************************/
+/******** Include statements ********/
+/************************************/
 
-#include <stdio.h>
 #include <sys/socket.h>     // socket, bind, listen accept functions.
 #include <arpa/inet.h>      // sockaddr_in, inet_addr
 #include <unistd.h>         // Write socket.
 #include <string.h>         // strcpy
 #include <netinet/tcp.h>    // SO_KEEPALIVE
+#include <netinet/in.h>     // INET_ADDRSTRLEN
 #include "ServerSocketUse.h"
 #include "SeverityLog_api.h" // Severity Log.
 
-/* Private constants */
+/************************************/
 
-#define IPV4_ADDR_SIZE  15      // IP address string size.
+/***********************************/
+/******** Define statements ********/
+/***********************************/
+
 #define GREETING_SIZE   100
 #define RX_BUFFER_SIZE  256     // RX buffer size.
 
-/* Function definitions */
+/***********************************/
+
+/*************************************/
+/******* Function definitions ********/
+/*************************************/
 
 /// @brief Create socket descriptor.
 /// @param domain Use AF_INET if the socket is meant to be serving to another computer in the same net,
@@ -100,13 +109,13 @@ int SocketAccept(int socket_desc)
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    LOG_INF("Connection accepted. Client's IP address: %s", inet_ntoa(client.sin_addr));
+    LOG_INF(SERVER_SOCKET_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
     // Send a message to the client as soon as it is accepted.
-    char client_ip_addr[IPV4_ADDR_SIZE + 1];
+    char client_ip_addr[INET_ADDRSTRLEN];
     memset(client_ip_addr, 0, sizeof(client_ip_addr));
     strcpy(client_ip_addr, inet_ntoa(client.sin_addr));
 
@@ -140,6 +149,14 @@ int SocketRead(int new_socket)
         }
         else if(read_from_socket <= 0)
         {
+            // Get client IP first, then Log it's IP address.
+            char client_IP_addr[INET_ADDRSTRLEN] = {};
+            struct sockaddr_in client;
+            socklen_t client_len = sizeof(client);
+            getpeername(new_socket, (struct sockaddr*)&client, &client_len);
+            inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
+
+            LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED, client_IP_addr);
             break;
         }
     }
@@ -155,7 +172,7 @@ void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
     if( !((bytes_read == (strlen("\n"))   && strcmp(rx_buffer, "\n")   == 0) ||
           (bytes_read == (strlen("\r\n")) && strcmp(rx_buffer, "\r\n") == 0)))
     {
-        LOG_INF("Data read from RX buffer: <%s>", rx_buffer);
+        LOG_INF(SERVER_SOCKET_DATA_READ_FROM_CLIENT, rx_buffer);
     }
 }
 
@@ -169,3 +186,5 @@ int CloseSocket(int new_socket)
 
     return close_socket;
 }
+
+/*************************************/
