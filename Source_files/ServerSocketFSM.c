@@ -10,11 +10,11 @@ int SocketStateCreate()
 
     if(socket_desc < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Socket file descriptor creation failed.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Socket file descriptor created.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
     }
 
     return socket_desc;
@@ -29,11 +29,11 @@ int SocketStateOptions(int socket_desc)
 
     if(socket_options < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Failed to set socket options.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Successfully set socket options.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
     }
 
     return socket_options;
@@ -51,11 +51,11 @@ int SocketStateBind(int socket_desc, int server_port)
 
     if(bind_socket  < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Socket binding failed.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Socket file descriptor binded.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
     }
     
     return bind_socket;
@@ -71,11 +71,11 @@ int SocketStateListen(int socket_desc, int max_conn_num)
 
     if(listen < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Socket listen failed.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Socket listen succeed.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
     }
     
     return listen;
@@ -90,11 +90,11 @@ int SocketStateAccept(int socket_desc)
 
     if(new_socket < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "Accept failed.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Accept succeed.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     }
     
     return new_socket;
@@ -109,7 +109,7 @@ int SocketStateRead(int new_socket)
 
     if(read <= 0)
     {
-        SeverityLog(SVRTY_LVL_WNG, "Client disconnected.\r\n");
+        LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED);
     }
 
     return read;
@@ -124,11 +124,11 @@ int SocketStateClose(int new_socket)
     
     if(close < 0)
     {
-        SeverityLog(SVRTY_LVL_ERR, "An error happened while closing the socket.\r\n");
+        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK);
     }
     else
     {
-        SeverityLog(SVRTY_LVL_INF, "Socket successfully closed.\r\n");
+        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK);
     }
 
     return close;    
