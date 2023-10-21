@@ -1,6 +1,16 @@
+/************************************/
+/******** Include statements ********/
+/************************************/
+
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "SeverityLog_api.h"
+
+/************************************/
+
+/*************************************/
+/******* Function definitions ********/
+/*************************************/
 
 /// @brief Create socket descriptor.
 /// @return < 0 if it failed to create the socket.
@@ -49,7 +59,7 @@ int SocketStateBind(int socket_desc, int server_port)
 
     int bind_socket = BindSocket(socket_desc, server);
 
-    if(bind_socket  < 0)
+    if(bind_socket < 0)
     {
         LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
     }
@@ -106,11 +116,6 @@ int SocketStateAccept(int socket_desc)
 int SocketStateRead(int new_socket)
 {
     int read = SocketRead(new_socket);
-
-    if(read <= 0)
-    {
-        LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED);
-    }
 
     return read;
 }
@@ -249,3 +254,5 @@ int ServerSocketRun(int server_port, int max_conn_num)
         }
     }
 }
+
+/*************************************/

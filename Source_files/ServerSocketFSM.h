@@ -23,7 +23,6 @@
 #define SERVER_SOCKET_MSG_LISTEN_OK         "Socket listen succeeded."
 #define SERVER_SOCKET_MSG_ACCEPT_NOK        "Accept failed."
 #define SERVER_SOCKET_MSG_ACCEPT_OK         "Accept succeeded."
-#define SERVER_SOCKET_CLIENT_DISCONNECTED   "Client disconnected."
 #define SERVER_SOCKET_MSG_CLOSE_NOK         "An error happened while closing the socket."
 #define SERVER_SOCKET_MSG_CLOSE_OK          "Socket successfully closed."
 
@@ -51,12 +50,14 @@ typedef enum
 /******** Function prototypes ********/
 /*************************************/
 
-int SocketStateCreate();
+int SocketStateCreate(void);
 int SocketStateOptions(int socket_desc);
 int SocketStateBind(int socket_desc, int server_port);
 int SocketStateListen(int socket_desc, int max_conn_num);
 int SocketStateAccept(int socket_desc);
 int SocketStateRead(int new_socket);
 int SocketStateClose(int new_socket);
+
+/*************************************/
 
 #endif
