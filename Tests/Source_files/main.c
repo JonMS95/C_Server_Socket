@@ -30,6 +30,11 @@
 #define CLIENTS_MAX_VALUE       3
 #define CLIENTS_DEFAULT_VALUE   1
 
+#define SIMULTANEOUS_CONNS_CHAR             's'
+#define SIMULTANEOUS_CONNS_LONG             "Simultaneous"
+#define SIMULTANEOUS_CONNS_DETAIL           "Max. number of concurrent conns."
+#define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
+
 /***************************************/
 
 /*
@@ -39,8 +44,14 @@ int main(int argc, char** argv)
 {
     SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
 
-    int server_port;
-    int max_clients_num;
+    int server_port         ;
+    int max_clients_num     ;
+    bool concurrency_enabled;
+    SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
+                                SIMULTANEOUS_CONNS_LONG             ,
+                                SIMULTANEOUS_CONNS_DETAIL           ,
+                                SIMULTANEOUS_CONNS_DEFAULT_VALUE    ,
+                                &concurrency_enabled                );
 
     SetOptionDefinitionInt( PORT_OPT_CHAR       ,
                             PORT_OPT_LONG       ,
@@ -67,7 +78,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled);
 
     return 0;
 }
