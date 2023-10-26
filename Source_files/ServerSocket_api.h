@@ -6,10 +6,18 @@ extern "C" {
 #endif
 
 /*************************************/
+/******** Include statements *********/
+/*************************************/
+
+#include <stdbool.h>
+
+/*************************************/
+
+/*************************************/
 /******** Function prototypes ********/
 /*************************************/
 
-int ServerSocketRun(int server_port, int max_conn_num);
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent);
 
 /*************************************/
 
