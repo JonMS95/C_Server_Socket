@@ -23,6 +23,10 @@
 #define SERVER_SOCKET_MSG_LISTEN_OK         "Socket listen succeeded."
 #define SERVER_SOCKET_MSG_ACCEPT_NOK        "Accept failed."
 #define SERVER_SOCKET_MSG_ACCEPT_OK         "Accept succeeded."
+#define SERVER_SOCKET_MSG_MAX_CONNS_REACHED "Cannot create a new server instance as maximum number of client connections have already been reached."
+#define SERVER_SOCKET_MSG_CANNOT_FORK       "Cannot fork the current server socket server process."
+#define SERVER_SOCKET_MSG_SERVER_INSTANCES  "Current number of server socket instances: <%d>."
+#define SERVER_SOCKET_MSG_NEW_PROCESS       "Created new server socket instance in process with PID <%d>."
 #define SERVER_SOCKET_MSG_CLOSE_NOK         "An error happened while closing the socket."
 #define SERVER_SOCKET_MSG_CLOSE_OK          "Socket successfully closed."
 
