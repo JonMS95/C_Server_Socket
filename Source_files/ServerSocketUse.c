@@ -88,7 +88,7 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
     return bind_socket;
 }
 
-/// @brief Listen for incoming connections.
+/// @brief Marks current socket as listener (server).
 /// @param socket_desc Socket descriptor.
 /// @param connections_number Maximum number of allowed connections.
 /// @return < 0 if listening failed.
@@ -115,10 +115,6 @@ int SocketAccept(int socket_desc)
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
     // Send a message to the client as soon as it is accepted.
-    char client_ip_addr[INET_ADDRSTRLEN];
-    memset(client_ip_addr, 0, sizeof(client_ip_addr));
-    strcpy(client_ip_addr, inet_ntoa(client.sin_addr));
-
     char greeting[GREETING_SIZE + 1];
     memset(greeting, 0, sizeof(greeting));
     sprintf(greeting, "Hello client!\r\nYour IP address is: %s\r\n", inet_ntoa(client.sin_addr));
