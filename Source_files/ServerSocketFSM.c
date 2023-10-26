@@ -2,6 +2,9 @@
 /******** Include statements ********/
 /************************************/
 
+#include <unistd.h>         // Fork if concurrency is accepted.
+#include <sys/types.h>      // Find child processes.
+#include <sys/wait.h>       // Find child processes.
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "SeverityLog_api.h"
@@ -143,11 +146,12 @@ int SocketStateClose(int new_socket)
 /// @param server_port Port number which the socket is going to be listening to.
 /// @param max_conn_num Maximum amount of allowed connections.
 /// @return < 0 if it failed.
-int ServerSocketRun(int server_port, int max_conn_num)
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int new_socket;
+    int server_instances_count = 0;
 
     while(1)
     {
@@ -156,53 +160,29 @@ int ServerSocketRun(int server_port, int max_conn_num)
             case CREATE_FD:
             {
                 socket_desc = SocketStateCreate();
-                if(socket_desc < 0)
-                {
-                    socket_fsm = CREATE_FD;
-                }
-                else
-                {
+                if(socket_desc >= 0)
                     socket_fsm = OPTIONS;
-                }
             }
             break;
 
             case OPTIONS:
             {
-                if(SocketStateOptions(socket_desc) < 0)
-                {
-                    socket_fsm = CREATE_FD;
-                }
-                else
-                {
+                if(SocketStateOptions(socket_desc) >= 0)
                     socket_fsm = BIND;
-                }
             }
             break;
 
             case BIND:
             {
-                if(SocketStateBind(socket_desc, server_port) < 0)
-                {
-                    socket_fsm = CREATE_FD;
-                }
-                else
-                {
+                if(SocketStateBind(socket_desc, server_port) >= 0)
                     socket_fsm = LISTEN;
-                }
             }
             break;
 
             case LISTEN:
             {
-                if(SocketStateListen(socket_desc, max_conn_num) < 0)
-                {
-                    socket_fsm = CREATE_FD;
-                }
-                else
-                {
+                if(SocketStateListen(socket_desc, max_conn_num) >= 0)
                     socket_fsm = ACCEPT;
-                }
             }
             break;
 
@@ -210,12 +190,40 @@ int ServerSocketRun(int server_port, int max_conn_num)
             {
                 new_socket = SocketStateAccept(socket_desc);
                 
-                if(new_socket < 0)
+                if(new_socket >= 0)
                 {
-                    socket_fsm = LISTEN;
-                }
-                else
-                {
+                    if(!concurrent)
+                    {
+                        socket_fsm = READ;
+                        continue;
+                    }
+
+                    if(server_instances_count >= max_conn_num)
+                    {
+                        LOG_WNG(SERVER_SOCKET_MSG_MAX_CONNS_REACHED);
+
+                        int status;
+
+                        // TO DO. Use waitpid here. Keep in mind that the number returned by fork() function is the PID of the recently created process.
+                    }
+
+                    int retfork = fork();
+
+                    if(retfork < 0)
+                    {
+                        LOG_ERR(SERVER_SOCKET_MSG_CANNOT_FORK);
+                        continue;
+                    }
+
+                    if(retfork > 0)
+                    {
+                        LOG_INF("retfork = %d", retfork);
+                        server_instances_count++;
+                        LOG_INF(SERVER_SOCKET_MSG_SERVER_INSTANCES, server_instances_count);
+                        continue;
+                    }
+
+                    LOG_DBG(SERVER_SOCKET_MSG_NEW_PROCESS, getpid());
                     socket_fsm = READ;
                 }
             }
@@ -225,11 +233,14 @@ int ServerSocketRun(int server_port, int max_conn_num)
             {
                 if(SocketStateRead(new_socket) <= 0)
                 {
-                    socket_fsm = LISTEN;
-                }
-                else
-                {
-                    socket_fsm = CLOSE;
+                    if(concurrent)
+                    {
+                        socket_fsm = CLOSE;
+                    }
+                    else
+                    {
+                        socket_fsm = ACCEPT;
+                    }
                 }
             }
             break;
@@ -243,8 +254,7 @@ int ServerSocketRun(int server_port, int max_conn_num)
                 }
                 else
                 {
-                    // socket_fsm = LISTEN;
-                    return -1;
+                    return 0;
                 }
             }
             break;
