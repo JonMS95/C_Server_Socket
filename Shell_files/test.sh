@@ -16,4 +16,4 @@ echo
 echo "*******************************"
 echo "Testing 'main' executable file."
 echo "*******************************"
-./Tests/Executable_files/main -p ${DEFAULT_USER_PORT} -c ${DEFAULT_CONN_NUM}
+./Tests/Executable_files/main -p ${DEFAULT_USER_PORT} -c ${DEFAULT_CONN_NUM} -s
