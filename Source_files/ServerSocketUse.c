@@ -114,13 +114,6 @@ int SocketAccept(int socket_desc)
     int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
-    // Send a message to the client as soon as it is accepted.
-    char greeting[GREETING_SIZE + 1];
-    memset(greeting, 0, sizeof(greeting));
-    sprintf(greeting, "Hello client!\r\nYour IP address is: %s\r\n", inet_ntoa(client.sin_addr));
-    
-    write(new_socket, greeting, sizeof(greeting));
-
     return new_socket;
 }
 
@@ -130,6 +123,19 @@ int SocketAccept(int socket_desc)
 /// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
 int SocketRead(int new_socket)
 {
+    // Get client IP first, then Log it's IP address.
+    char client_IP_addr[INET_ADDRSTRLEN] = {};
+    struct sockaddr_in client;
+    socklen_t client_len = sizeof(client);
+    getpeername(new_socket, (struct sockaddr*)&client, &client_len);
+    inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
+
+    // Send a message to the client as soon as it is accepted.
+    char greeting[GREETING_SIZE + 1];
+    memset(greeting, 0, sizeof(greeting));
+    sprintf(greeting, "Hello client!\r\nYour IP address is: %s\r\n", client_IP_addr);
+    write(new_socket, greeting, sizeof(greeting));
+
     char rx_buffer[RX_BUFFER_SIZE];
     memset(rx_buffer, 0, sizeof(rx_buffer));
 
@@ -142,20 +148,13 @@ int SocketRead(int new_socket)
         {
             SocketDisplayOnConsole(read_from_socket, rx_buffer);
             memset(rx_buffer, 0, read_from_socket);
+            continue;
         }
-        else if(read_from_socket <= 0)
-        {
-            // Get client IP first, then Log it's IP address.
-            char client_IP_addr[INET_ADDRSTRLEN] = {};
-            struct sockaddr_in client;
-            socklen_t client_len = sizeof(client);
-            getpeername(new_socket, (struct sockaddr*)&client, &client_len);
-            inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
-
-            LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED, client_IP_addr);
-            break;
-        }
+        
+        break;
     }
+
+    LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED, client_IP_addr);
 
     return read_from_socket;
 }
