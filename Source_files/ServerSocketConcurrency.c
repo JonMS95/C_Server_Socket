@@ -29,12 +29,12 @@ int ServerSocketPossibleNewInstance(pid_t* server_instance_processes, int max_co
 
         if( (waitpid_ret == server_instance_processes[i]) || (waitpid_ret < 0) )
         {
-            LOG_DBG("Socket instance <%d> with PID: <%d> is no longer running.", i, waitpid_ret);
+            LOG_DBG(SERVER_SOCKET_MSG_INSTANCE_NOT_RUNNING, i, waitpid_ret);
             server_instance_processes[i] = 0;
         }
         else
         {
-            LOG_DBG("Socket instance <%d> with PID: <%d> is still running.", i, server_instance_processes[i]);
+            LOG_DBG(SERVER_SOCKET_MSG_INSTANCE_STILL_RUNNING, i, server_instance_processes[i]);
             server_instances_count++;
         }
     }
