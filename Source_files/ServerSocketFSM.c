@@ -164,6 +164,8 @@ int SocketStateRefuse(int client_socket)
 
     write(client_socket, refusal_msg, strlen(refusal_msg));
 
+    shutdown(client_socket, SHUT_RDWR);
+
     sleep(SERVER_SOCKET_SECONDS_AFTER_REFUSAL);
 
     int close_socket = SocketStateClose(client_socket);
@@ -314,14 +316,11 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
 
             case CLOSE:
             {
-                if(SocketStateClose(client_socket) < 0)
-                {
-                    socket_fsm = CLOSE;
-                }
-                else
-                {
-                    return 0;
-                }
+                SocketStateClose(client_socket);
+                if(server_instances != NULL)
+                    free(server_instances);
+
+                return 0;
             }
             break;
             
