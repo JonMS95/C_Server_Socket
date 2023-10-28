@@ -5,6 +5,7 @@
 /******** Include statements ********/
 /************************************/
 
+#include <sys/types.h>      // pid_t type.
 #include "ServerSocket_api.h"
 
 /************************************/
@@ -13,6 +14,9 @@
 /******** Define statements ********/
 /***********************************/
 
+#define SERVER_SOCKET_SET_SIGINT_ERR        "Error while trying to set up SIGINT handler."
+#define SERVER_SOCKET_MSG_SIGINT_RECEIVED   "Received Ctrl+C (SIGINT). Cleaning up and exiting."
+#define SERVER_SOCKET_MSG_CLEANING_UP       "Cleaning up server instances array in server with PID <%d>."
 #define SERVER_SOCKET_MSG_CREATION_NOK      "Socket file descriptor creation failed."
 #define SERVER_SOCKET_MSG_CREATION_OK       "Socket file descriptor created."
 #define SERVER_SOCKET_MSG_SET_OPTIONS_NOK   "Failed to set socket options."
@@ -65,13 +69,17 @@ typedef enum
 /******** Function prototypes ********/
 /*************************************/
 
+void SocketSIGINTHandler(int signum);
 int SocketStateCreate(void);
 int SocketStateOptions(int socket_desc);
 int SocketStateBind(int socket_desc, int server_port);
 int SocketStateListen(int socket_desc, int max_conn_num);
 int SocketStateAccept(int socket_desc);
-int SocketStateRead(int new_socket);
-int SocketStateClose(int new_socket);
+int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
+int SocketStateRefuse(int client_socket);
+int SocketStateRead(int client_socket);
+int SocketStateClose(int client_socket);
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent);
 
 /*************************************/
 

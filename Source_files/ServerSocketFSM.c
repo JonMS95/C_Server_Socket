@@ -5,6 +5,7 @@
 #include <stdlib.h>         // malloc, calloc, realloc, free.
 #include <unistd.h>         // Fork if concurrency is accepted.
 #include <string.h>         // strcpy
+#include <signal.h>         // Shutdown signal.
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "ServerSocketConcurrency.h"
@@ -12,13 +13,38 @@
 
 /************************************/
 
+/***********************************/
+/******** Private variables ********/
+/***********************************/
+
+static volatile int ctrlCPressed    = 0;
+static pid_t* server_instances      = NULL; // This variable is declared as provate global so that SIGINT handler is able to find and clean it up.
+
+/***********************************/
+
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
 
+/// @brief Handle SIGINT signal (Ctrl+C).
+/// @param signum Signal number (SIGINT by default).
+void SocketSIGINTHandler(int signum)
+{
+    LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
+    ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
+
+    if(server_instances != NULL)
+    {
+        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
+        free(server_instances);
+    }
+
+    exit(EXIT_SUCCESS);
+}
+
 /// @brief Create socket descriptor.
 /// @return < 0 if it failed to create the socket.
-int SocketStateCreate()
+int SocketStateCreate(void)
 {
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
@@ -157,6 +183,9 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
     return 1;
 }
 
+/// @brief Refuse incoming connection. To be called when there are no free spots for a new server instance.
+/// @param client_socket Client socket descriptor.
+/// @return < 0 if any error happened while trying to close the socket.
 int SocketStateRefuse(int client_socket)
 {
     char refusal_msg[SERVER_SOCKET_LEN_MSG_REFUSE] = {};
@@ -211,9 +240,15 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int client_socket;
-    pid_t* server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
+    server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
 
-    while(1)
+    if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
+    {
+        LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
+        exit(EXIT_FAILURE);
+    }
+
+    while(!ctrlCPressed)
     {
         switch (socket_fsm)
         {
@@ -318,7 +353,10 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
             {
                 SocketStateClose(client_socket);
                 if(server_instances != NULL)
+                {
+                    LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
                     free(server_instances);
+                }
 
                 return 0;
             }
@@ -328,6 +366,8 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
             break;
         }
     }
+
+    return 0;
 }
 
 /*************************************/
