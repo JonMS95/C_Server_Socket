@@ -34,10 +34,10 @@
 #define SERVER_SOCKET_MSG_CLOSE_NOK         "An error happened while closing the socket."
 #define SERVER_SOCKET_MSG_CLOSE_OK          "Socket successfully closed."
 
-#define SERVER_SOCKET_ERR_CANNOT_FORK       -2
-#define SERVER_SOCKET_ERR_REFUSE_CONN       -1
-#define SERVER_SOCKET_SUCCESS_PARENT        0
-#define SERVER_SOCKET_SUCCESS_CHILD         1
+#define SERVER_SOCKET_CONC_ERR_CANNOT_FORK       -2
+#define SERVER_SOCKET_CONC_ERR_REFUSE_CONN       -1
+#define SERVER_SOCKET_CONC_SUCCESS_PARENT        0
+#define SERVER_SOCKET_CONC_SUCCESS_CHILD         1
 
 #define SERVER_SOCKET_LEN_MSG_REFUSE        100
 
@@ -52,6 +52,7 @@
 typedef enum
 {
     CREATE_FD = 0       ,
+    SETUP_SSL           ,
     OPTIONS             ,
     BIND                ,
     LISTEN              ,
@@ -79,7 +80,6 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
 int SocketStateRefuse(int client_socket);
 int SocketStateRead(int client_socket);
 int SocketStateClose(int client_socket);
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent);
 
 /*************************************/
 
