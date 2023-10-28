@@ -45,6 +45,10 @@ int ServerSocketPossibleNewInstance(pid_t* server_instance_processes, int max_co
     return (max_conn_num - server_instances_count);
 }
 
+/// @brief Searches a free spot for a new server socket instance to be created.
+/// @param server_instance_processes Array which contains the PID of each running server socket instance.
+/// @param max_conn_num Maximum number of allowed connections.
+/// @return -1 if no spot could be found, index of the spot within the server_instance_processes array otherwise.
 int ServerSocketNewInstanceSpotIndex(pid_t* server_instance_processes, int max_conn_num)
 {
     for(int i = 0; i < max_conn_num; i++)
