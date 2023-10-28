@@ -17,7 +17,7 @@ extern "C" {
 /******** Function prototypes ********/
 /*************************************/
 
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent);
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure);
 
 /*************************************/
 
