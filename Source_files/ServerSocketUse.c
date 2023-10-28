@@ -13,15 +13,6 @@
 
 /************************************/
 
-/***********************************/
-/******** Define statements ********/
-/***********************************/
-
-#define GREETING_SIZE   100
-#define RX_BUFFER_SIZE  256     // RX buffer size.
-
-/***********************************/
-
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
@@ -109,7 +100,7 @@ int SocketAccept(int socket_desc)
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    LOG_INF(SERVER_SOCKET_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+    LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
@@ -131,12 +122,12 @@ int SocketRead(int new_socket)
     inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
 
     // Send a message to the client as soon as it is accepted.
-    char greeting[GREETING_SIZE + 1];
+    char greeting[SERVER_SOCKET_LEN_MSG_GREETING + 1];
     memset(greeting, 0, sizeof(greeting));
-    sprintf(greeting, "Hello client!\r\nYour IP address is: %s\r\n", client_IP_addr);
+    sprintf(greeting, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
     write(new_socket, greeting, sizeof(greeting));
 
-    char rx_buffer[RX_BUFFER_SIZE];
+    char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
     memset(rx_buffer, 0, sizeof(rx_buffer));
 
     ssize_t read_from_socket = 0;
@@ -154,7 +145,7 @@ int SocketRead(int new_socket)
         break;
     }
 
-    LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED, client_IP_addr);
+    LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
 
     return read_from_socket;
 }
@@ -167,7 +158,7 @@ void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
     if( !((bytes_read == (strlen("\n"))   && strcmp(rx_buffer, "\n")   == 0) ||
           (bytes_read == (strlen("\r\n")) && strcmp(rx_buffer, "\r\n") == 0)))
     {
-        LOG_INF(SERVER_SOCKET_DATA_READ_FROM_CLIENT, rx_buffer);
+        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
     }
 }
 
