@@ -23,17 +23,26 @@
 
 /********* Connection settings *********/
 
-#define CLIENTS_OPT_CHAR        'c'
+#define CLIENTS_OPT_CHAR        'm'
 #define CLIENTS_OPT_LONG        "Clients"
 #define CLIENTS_OPT_DETAIL      "Maximum number of clients."
 #define CLIENTS_MIN_VALUE       1
 #define CLIENTS_MAX_VALUE       3
 #define CLIENTS_DEFAULT_VALUE   1
 
-#define SIMULTANEOUS_CONNS_CHAR             's'
-#define SIMULTANEOUS_CONNS_LONG             "Simultaneous"
+/********* Enable concurrency *********/
+
+#define SIMULTANEOUS_CONNS_CHAR             'c'
+#define SIMULTANEOUS_CONNS_LONG             "Concurrent"
 #define SIMULTANEOUS_CONNS_DETAIL           "Max. number of concurrent conns."
 #define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
+
+/********* Secure connection *********/
+
+#define SECURE_CONN_CHAR            's'
+#define SECURE_CONN_LONG            "Secure"
+#define SECURE_CONN_DETAIL          "Secure connection"
+#define SECURE_CONN_DEFAULT_VALUE   false
 
 /***************************************/
 
@@ -47,6 +56,8 @@ int main(int argc, char** argv)
     int server_port         ;
     int max_clients_num     ;
     bool concurrency_enabled;
+    bool secure_connection;
+
     SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
                                 SIMULTANEOUS_CONNS_LONG             ,
                                 SIMULTANEOUS_CONNS_DETAIL           ,
@@ -69,6 +80,12 @@ int main(int argc, char** argv)
                             CLIENTS_DEFAULT_VALUE   ,
                             &max_clients_num        );
 
+    SetOptionDefinitionBool(    SECURE_CONN_CHAR            ,
+                                SECURE_CONN_LONG            ,
+                                SECURE_CONN_DETAIL          ,
+                                SECURE_CONN_DEFAULT_VALUE   ,
+                                &secure_connection          );
+
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
     {
@@ -78,7 +95,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num, concurrency_enabled);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection);
 
     return 0;
 }
