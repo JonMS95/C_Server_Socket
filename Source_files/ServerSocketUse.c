@@ -13,15 +13,6 @@
 
 /************************************/
 
-/***********************************/
-/******** Define statements ********/
-/***********************************/
-
-#define GREETING_SIZE   100
-#define RX_BUFFER_SIZE  256     // RX buffer size.
-
-/***********************************/
-
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
@@ -88,7 +79,7 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
     return bind_socket;
 }
 
-/// @brief Listen for incoming connections.
+/// @brief Marks current socket as listener (server).
 /// @param socket_desc Socket descriptor.
 /// @param connections_number Maximum number of allowed connections.
 /// @return < 0 if listening failed.
@@ -109,21 +100,10 @@ int SocketAccept(int socket_desc)
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
     int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    LOG_INF(SERVER_SOCKET_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+    LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     int keep_alive = 5;
     int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
-
-    // Send a message to the client as soon as it is accepted.
-    char client_ip_addr[INET_ADDRSTRLEN];
-    memset(client_ip_addr, 0, sizeof(client_ip_addr));
-    strcpy(client_ip_addr, inet_ntoa(client.sin_addr));
-
-    char greeting[GREETING_SIZE + 1];
-    memset(greeting, 0, sizeof(greeting));
-    sprintf(greeting, "Hello client!\r\nYour IP address is: %s\r\n", inet_ntoa(client.sin_addr));
-    
-    write(new_socket, greeting, sizeof(greeting));
 
     return new_socket;
 }
@@ -134,7 +114,20 @@ int SocketAccept(int socket_desc)
 /// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
 int SocketRead(int new_socket)
 {
-    char rx_buffer[RX_BUFFER_SIZE];
+    // Get client IP first, then Log it's IP address.
+    char client_IP_addr[INET_ADDRSTRLEN] = {};
+    struct sockaddr_in client;
+    socklen_t client_len = sizeof(client);
+    getpeername(new_socket, (struct sockaddr*)&client, &client_len);
+    inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
+
+    // Send a message to the client as soon as it is accepted.
+    char greeting[SERVER_SOCKET_LEN_MSG_GREETING + 1];
+    memset(greeting, 0, sizeof(greeting));
+    sprintf(greeting, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
+    write(new_socket, greeting, sizeof(greeting));
+
+    char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
     memset(rx_buffer, 0, sizeof(rx_buffer));
 
     ssize_t read_from_socket = 0;
@@ -146,20 +139,13 @@ int SocketRead(int new_socket)
         {
             SocketDisplayOnConsole(read_from_socket, rx_buffer);
             memset(rx_buffer, 0, read_from_socket);
+            continue;
         }
-        else if(read_from_socket <= 0)
-        {
-            // Get client IP first, then Log it's IP address.
-            char client_IP_addr[INET_ADDRSTRLEN] = {};
-            struct sockaddr_in client;
-            socklen_t client_len = sizeof(client);
-            getpeername(new_socket, (struct sockaddr*)&client, &client_len);
-            inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
-
-            LOG_WNG(SERVER_SOCKET_CLIENT_DISCONNECTED, client_IP_addr);
-            break;
-        }
+        
+        break;
     }
+
+    LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
 
     return read_from_socket;
 }
@@ -172,7 +158,7 @@ void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
     if( !((bytes_read == (strlen("\n"))   && strcmp(rx_buffer, "\n")   == 0) ||
           (bytes_read == (strlen("\r\n")) && strcmp(rx_buffer, "\r\n") == 0)))
     {
-        LOG_INF(SERVER_SOCKET_DATA_READ_FROM_CLIENT, rx_buffer);
+        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
     }
 }
 

@@ -14,9 +14,12 @@
 /******** Define statements ********/
 /***********************************/
 
-#define SERVER_SOCKET_CLIENT_ACCEPTED       "Connection accepted. Client's IP address: <%s>"
-#define SERVER_SOCKET_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
-#define SERVER_SOCKET_DATA_READ_FROM_CLIENT "Data read from RX buffer: <%s>"
+#define SERVER_SOCKET_LEN_MSG_GREETING          100
+#define SERVER_SOCKET_LEN_RX_BUFFER             256     // RX buffer size.
+#define SERVER_SOCKET_MSG_GREETING              "Hello client!\r\nYour IP address is: %s\r\n"
+#define SERVER_SOCKET_MSG_CLIENT_ACCEPTED       "Connection accepted. Client's IP address: <%s>"
+#define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
+#define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from RX buffer: <%s>"
 
 /***********************************/
 
