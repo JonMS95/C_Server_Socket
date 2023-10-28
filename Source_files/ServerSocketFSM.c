@@ -6,6 +6,8 @@
 #include <unistd.h>         // Fork if concurrency is accepted.
 #include <string.h>         // strcpy
 #include <signal.h>         // Shutdown signal.
+#include <openssl/ssl.h>    // OpenSSL.
+#include <openssl/err.h>    // OpenSSL errors.
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "ServerSocketConcurrency.h"
@@ -17,14 +19,26 @@
 /******** Private variables ********/
 /***********************************/
 
-static volatile int ctrlCPressed    = 0;
-static pid_t* server_instances      = NULL; // This variable is declared as provate global so that SIGINT handler is able to find and clean it up.
+static volatile int ctrlCPressed        = 0;
+static pid_t*       server_instances    = NULL;
+static SSL_CTX*     ctx                 = NULL;
+static SSL*         ssl                 = NULL;
 
 /***********************************/
 
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
+
+// WIP
+void SocketFreeResources(void)
+{
+    if(server_instances != NULL)
+    {
+        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
+        free(server_instances);
+    }
+}
 
 /// @brief Handle SIGINT signal (Ctrl+C).
 /// @param signum Signal number (SIGINT by default).
@@ -33,11 +47,7 @@ void SocketSIGINTHandler(int signum)
     LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
     ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
 
-    if(server_instances != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
-        free(server_instances);
-    }
+    SocketFreeResources();
 
     exit(EXIT_SUCCESS);
 }
@@ -59,6 +69,37 @@ int SocketStateCreate(void)
 
     return socket_desc;
 }
+
+///////////////////////////////////////////////
+// WIP
+#define CERT_FILE   "cert.crt"
+#define KEY_FILE    "server.key"
+int SocketStateSetupSSL(SSL_CTX* ctx, SSL* ssl)
+{
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+
+    ctx = SSL_CTX_new(SSLv23_server_method());
+
+    if(ctx == NULL)
+    {
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+
+    // Load server certificate and private key
+    if (SSL_CTX_use_certificate_file(ctx, CERT_FILE, SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr);
+        // exit(EXIT_FAILURE);
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, KEY_FILE, SSL_FILETYPE_PEM) <= 0) {
+        ERR_print_errors_fp(stderr);
+        // exit(EXIT_FAILURE);
+    }
+}
+///////////////////////////////////////////////
 
 /// @brief Set socket options.
 /// @param socket_desc Socket file descriptor.
@@ -153,7 +194,7 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
     if(possible_new_instance < 0)
     {
         LOG_WNG(SERVER_SOCKET_MSG_MAX_CONNS_REACHED);
-        return -1;
+        return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
     }
 
     int retfork = fork();
@@ -161,7 +202,7 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
     if(retfork < 0)
     {
         LOG_ERR(SERVER_SOCKET_MSG_CANNOT_FORK);
-        return -2;
+        return SERVER_SOCKET_CONC_ERR_CANNOT_FORK;
     }
 
     if(retfork > 0)
@@ -170,17 +211,17 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
 
         if(new_server_instance_index < 0)
         {
-            return -1;
+            return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
         }
 
         server_instance_processes[new_server_instance_index] = retfork;
 
         LOG_DBG(SERVER_SOCKET_MSG_NEW_PROCESS, retfork);
 
-        return 0;
+        return SERVER_SOCKET_CONC_SUCCESS_PARENT;
     }
 
-    return 1;
+    return SERVER_SOCKET_CONC_SUCCESS_CHILD;
 }
 
 /// @brief Refuse incoming connection. To be called when there are no free spots for a new server instance.
@@ -235,7 +276,7 @@ int SocketStateClose(int client_socket)
 /// @param server_port Port number which the socket is going to be listening to.
 /// @param max_conn_num Maximum amount of allowed connections.
 /// @return < 0 if it failed.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure)
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
@@ -256,7 +297,21 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
             {
                 socket_desc = SocketStateCreate();
                 if(socket_desc >= 0)
-                    socket_fsm = OPTIONS;
+                {
+                    if(secure)
+                        socket_fsm = SETUP_SSL;
+                    else
+                        socket_fsm = OPTIONS;
+                }
+            }
+            break;
+
+            case SETUP_SSL:
+            {
+                // WIP
+                SocketStateSetupSSL(ctx, ssl);
+                // If OK, then go to OPTIONS.
+                socket_fsm = OPTIONS;
             }
             break;
 
@@ -304,20 +359,20 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
 
                 switch(manage_concurrency)
                 {
-                    case SERVER_SOCKET_ERR_REFUSE_CONN:
+                    case SERVER_SOCKET_CONC_ERR_REFUSE_CONN:
                     {
                         socket_fsm = REFUSE;
                     }
                     break;
 
-                    case SERVER_SOCKET_SUCCESS_PARENT:
-                    case SERVER_SOCKET_ERR_CANNOT_FORK:
+                    case SERVER_SOCKET_CONC_SUCCESS_PARENT:
+                    case SERVER_SOCKET_CONC_ERR_CANNOT_FORK:
                     {
                         socket_fsm = ACCEPT;
                     }
                     break;
 
-                    case SERVER_SOCKET_SUCCESS_CHILD:
+                    case SERVER_SOCKET_CONC_SUCCESS_CHILD:
                     {
                         socket_fsm = READ;
                     }
@@ -330,10 +385,9 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
 
             case REFUSE:
             {
-                int refuse = SocketStateRefuse(client_socket);
+                SocketStateRefuse(client_socket);
 
-                if(refuse >= 0)
-                    socket_fsm = ACCEPT;
+                socket_fsm = ACCEPT;
             }
             break;
 
@@ -352,11 +406,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent)
             case CLOSE:
             {
                 SocketStateClose(client_socket);
-                if(server_instances != NULL)
-                {
-                    LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
-                    free(server_instances);
-                }
+                SocketFreeResources();
 
                 return 0;
             }
