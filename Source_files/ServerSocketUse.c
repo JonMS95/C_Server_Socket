@@ -11,7 +11,7 @@
 #include "ServerSocketUse.h"
 #include "SeverityLog_api.h" // Severity Log.
 
-/************************************/
+/*************************************/
 
 /*************************************/
 /******* Function definitions ********/
@@ -112,7 +112,7 @@ int SocketAccept(int socket_desc)
 /// @brief Reads from client. No perror statement exists within this function's definition, as read function can return something <= 0 if client gets disconnected.
 /// @param new_socket Socket instance, based on the previously defined socket descriptor. 
 /// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
-int SocketRead(int new_socket)
+int SocketRead(int new_socket, bool secure, SSL** ssl)
 {
     // Get client IP first, then Log it's IP address.
     char client_IP_addr[INET_ADDRSTRLEN] = {};
@@ -131,9 +131,14 @@ int SocketRead(int new_socket)
     memset(rx_buffer, 0, sizeof(rx_buffer));
 
     ssize_t read_from_socket = 0;
+
     while(read_from_socket >= 0)
     {
-        read_from_socket = read(new_socket, rx_buffer, sizeof(rx_buffer));
+        if(!secure)
+            read_from_socket = read(new_socket, rx_buffer, sizeof(rx_buffer));
+        else
+            read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
+
         // Read data from buffer.
         if (read_from_socket > 0)
         {
