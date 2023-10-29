@@ -6,14 +6,18 @@
 #include <unistd.h>         // Fork if concurrency is accepted.
 #include <string.h>         // strcpy
 #include <signal.h>         // Shutdown signal.
-#include <openssl/ssl.h>    // OpenSSL.
-#include <openssl/err.h>    // OpenSSL errors.
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "ServerSocketConcurrency.h"
+#include "ServerSocketSSL.h"
 #include "SeverityLog_api.h"
 
 /************************************/
+
+///////////////////////////////////////////////
+// WIP
+#define CERT_FILE   "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
+#define KEY_FILE    "/home/jon/Desktop/scripts/certificate_test/private.key"
 
 /***********************************/
 /******** Private variables ********/
@@ -35,8 +39,20 @@ void SocketFreeResources(void)
 {
     if(server_instances != NULL)
     {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP, getpid());
+        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
         free(server_instances);
+    }
+
+    if(ssl != NULL)
+    {
+        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
+        SSL_free(ssl);
+    }
+
+    if(ctx != NULL)
+    {
+        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
+        SSL_CTX_free(ctx);
     }
 }
 
@@ -59,45 +75,29 @@ int SocketStateCreate(void)
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
     if(socket_desc < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
-    }
 
     return socket_desc;
 }
 
-///////////////////////////////////////////////
-// WIP
-#define CERT_FILE   "cert.crt"
-#define KEY_FILE    "server.key"
-int SocketStateSetupSSL(SSL_CTX* ctx, SSL* ssl)
+/// @brief Setup SSL data and context.
+/// @param ctx SSL context
+/// @param ssl SSL data
+/// @param cert_path Path to certificate.
+/// @param priv_key_path Path to private key.
+/// @return 0 if succeeded, < 0 otherwise.
+int SocketStateSetupSSL(SSL_CTX* ctx, SSL* ssl, char* cert_path, char* priv_key_path)
 {
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    SSL_load_error_strings();
+    int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, CERT_FILE, KEY_FILE);
 
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
+        LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
+    else
+        LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
 
-    if(ctx == NULL)
-    {
-        ERR_print_errors_fp(stderr);
-        exit(EXIT_FAILURE);
-    }
-
-    // Load server certificate and private key
-    if (SSL_CTX_use_certificate_file(ctx, CERT_FILE, SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr);
-        // exit(EXIT_FAILURE);
-    }
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, KEY_FILE, SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr);
-        // exit(EXIT_FAILURE);
-    }
+    return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
 }
 ///////////////////////////////////////////////
 
@@ -109,13 +109,9 @@ int SocketStateOptions(int socket_desc)
     int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
 
     if(socket_options < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
-    }
 
     return socket_options;
 }
@@ -131,13 +127,9 @@ int SocketStateBind(int socket_desc, int server_port)
     int bind_socket = BindSocket(socket_desc, server);
 
     if(bind_socket < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
-    }
     
     return bind_socket;
 }
@@ -151,13 +143,9 @@ int SocketStateListen(int socket_desc, int max_conn_num)
     int listen = SocketListen(socket_desc, max_conn_num);
 
     if(listen < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
-    }
     
     return listen;
 }
@@ -170,13 +158,9 @@ int SocketStateAccept(int socket_desc)
     int client_socket = SocketAccept(socket_desc);
 
     if(client_socket < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
-    }
     
     return client_socket;
 }
@@ -261,13 +245,9 @@ int SocketStateClose(int client_socket)
     int close = CloseSocket(client_socket);
     
     if(close < 0)
-    {
         LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK);
-    }
     else
-    {
         LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK);
-    }
 
     return close;    
 }
@@ -297,21 +277,24 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             {
                 socket_desc = SocketStateCreate();
                 if(socket_desc >= 0)
-                {
-                    if(secure)
-                        socket_fsm = SETUP_SSL;
-                    else
-                        socket_fsm = OPTIONS;
-                }
+                    socket_fsm = SETUP_SSL;
             }
             break;
 
             case SETUP_SSL:
             {
                 // WIP
-                SocketStateSetupSSL(ctx, ssl);
-                // If OK, then go to OPTIONS.
-                socket_fsm = OPTIONS;
+                if(!secure)
+                {
+                    socket_fsm = OPTIONS;
+                    continue;
+                }
+                
+                if(SocketStateSetupSSL(ctx, ssl, CERT_FILE, KEY_FILE) < 0)
+                    socket_fsm = CLOSE;
+                else
+                    socket_fsm = OPTIONS;
+
             }
             break;
 
