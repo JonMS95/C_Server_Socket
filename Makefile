@@ -57,10 +57,6 @@ endif
 # Basic system dependencies
 BASIC_SYSTEM_DEPS := $(COMP) xmlstarlet git
 
-#Project system deps
-PRJ_SYSTEM_DEPS := ssl
-PRJ_LINKS 		:= -lssl -lcrypto
-
 # Dependencies directories
 HEADER_DEPS_DIR			:= Dependency_files/Header_files
 SO_DEPS_DIR				:= Dependency_files/Dynamic_libraries
@@ -185,7 +181,7 @@ test_deps:
 	@bash $(SHELL_SYM_LINKS) -d $(D_TEST_DEPS)
 
 $(TEST_EXE_MAIN): $(TEST_SRC_MAIN) $(wildcard $(TEST_SO_DEPS_DIR)/*.so) $(wildcard $(TEST_HEADER_DEPS_DIR)/*.h)
-	$(COMP) $(FLAGS) -I$(TEST_HEADER_DEPS_DIR) $(TEST_SRC_MAIN) -L$(TEST_SO_DEPS_DIR) $(addprefix -l,$(patsubst lib%.so,%,$(shell ls $(TEST_SO_DEPS_DIR)))) $(PRJ_LINKS) -o $(TEST_EXE_MAIN)
+	$(COMP) $(FLAGS) -I$(TEST_HEADER_DEPS_DIR) $(TEST_SRC_MAIN) -L$(TEST_SO_DEPS_DIR) $(addprefix -l,$(patsubst lib%.so,%,$(shell ls $(TEST_SO_DEPS_DIR)))) -o $(TEST_EXE_MAIN)
 
 test_main: $(TEST_EXE_MAIN)
 
