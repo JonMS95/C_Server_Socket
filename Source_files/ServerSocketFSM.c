@@ -88,7 +88,7 @@ int SocketStateCreate(void)
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 0 if succeeded, < 0 otherwise.
-int SocketStateSetupSSL(SSL_CTX* ctx, SSL* ssl, char* cert_path, char* priv_key_path)
+int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, CERT_FILE, KEY_FILE);
 
@@ -99,7 +99,6 @@ int SocketStateSetupSSL(SSL_CTX* ctx, SSL* ssl, char* cert_path, char* priv_key_
 
     return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
 }
-///////////////////////////////////////////////
 
 /// @brief Set socket options.
 /// @param socket_desc Socket file descriptor.
@@ -227,12 +226,29 @@ int SocketStateRefuse(int client_socket)
     return close_socket;
 }
 
+/// @brief Perform SSL handshake if needed.
+/// @param client_socket Client socket instance.
+/// @param ctx SSL context.
+/// @param ssl SSL data.
+/// @return 0 if handhsake was successfully performed, < 0 otherwise.
+int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
+{
+    int ssl_handshake = ServerSocketSSLHandshake(client_socket, ctx, ssl);
+
+    if(ssl_handshake != SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS)
+        LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
+    else
+        LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
+
+    return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
+}
+
 /// @brief Read data received in the socket.
 /// @param client_socket Socket file descriptor.
 /// @return <= 0 if it failed to read.
-int SocketStateRead(int client_socket)
+int SocketStateRead(int client_socket, bool secure, SSL** ssl)
 {
-    int read = SocketRead(client_socket);
+    int read = SocketRead(client_socket, secure, ssl);
 
     return read;
 }
@@ -290,7 +306,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
                     continue;
                 }
                 
-                if(SocketStateSetupSSL(ctx, ssl, CERT_FILE, KEY_FILE) < 0)
+                if(SocketStateSetupSSL(&ctx, &ssl, CERT_FILE, KEY_FILE) < 0)
                     socket_fsm = CLOSE;
                 else
                     socket_fsm = OPTIONS;
@@ -327,7 +343,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
                 {
                     if(!concurrent)
                     {
-                        socket_fsm = READ;
+                        socket_fsm = SSL_HANDSHAKE;
                         continue;
                     }
 
@@ -357,7 +373,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
 
                     case SERVER_SOCKET_CONC_SUCCESS_CHILD:
                     {
-                        socket_fsm = READ;
+                        socket_fsm = SSL_HANDSHAKE;
                     }
 
                     default:
@@ -374,9 +390,24 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             }
             break;
 
+            case SSL_HANDSHAKE:
+            {
+                if(!secure)
+                {
+                    socket_fsm = READ;
+                    continue;
+                }
+
+                if(SocketStateSSLHandshake(client_socket, &ctx, &ssl) >= 0)
+                    socket_fsm = READ;
+                else
+                    socket_fsm = ACCEPT;
+            }
+            break;
+
             case READ:
             {
-                if(SocketStateRead(client_socket) <= 0)
+                if(SocketStateRead(client_socket, secure, &ssl) <= 0)
                 {
                     if(concurrent)
                         socket_fsm = CLOSE;

@@ -6,6 +6,7 @@
 /************************************/
 
 #include <sys/types.h>      // pid_t type.
+#include <openssl/ssl.h>
 #include "ServerSocket_api.h"
 
 /************************************/
@@ -35,6 +36,8 @@
 #define SERVER_SOCKET_MSG_CANNOT_FORK           "Cannot fork the current server socket server process."
 #define SERVER_SOCKET_MSG_NEW_PROCESS           "Created new server socket instance in process with PID <%d>."
 #define SERVER_SOCKET_MSG_REFUSE                "Connection refused by the server. Closing socket in %d seconds."
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK     "SSL handshake failed."
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK      "SSL handshake succeeded."
 #define SERVER_SOCKET_MSG_CLOSE_NOK             "An error happened while closing the socket."
 #define SERVER_SOCKET_MSG_CLOSE_OK              "Socket successfully closed."
 
@@ -63,6 +66,7 @@ typedef enum
     ACCEPT              ,
     MANAGE_CONCURRENCY  ,
     REFUSE              ,
+    SSL_HANDSHAKE       ,
     READ                ,
     CLOSE               ,
 
@@ -82,7 +86,7 @@ int SocketStateListen(int socket_desc, int max_conn_num);
 int SocketStateAccept(int socket_desc);
 int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
 int SocketStateRefuse(int client_socket);
-int SocketStateRead(int client_socket);
+int SocketStateRead(int client_socket, bool secure, SSL** ssl);
 int SocketStateClose(int client_socket);
 
 /*************************************/
