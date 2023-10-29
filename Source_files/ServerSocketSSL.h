@@ -16,13 +16,16 @@
 #define SERVER_SOCKET_SETUP_SSL_NULL_CTX    -1
 #define SERVER_SOCKET_SETUP_SSL_SUCCESS     1
 
+#define SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS 1
+
 /************************************/
 
 /*************************************/
 /******** Function prototypes ********/
 /*************************************/
 
-int ServerSocketSSLSetup(SSL_CTX* ctx, SSL* ssl, char* cert_path, char* priv_key_path);
+int ServerSocketSSLSetup(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path);
+int ServerSocketSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl);
 
 /*************************************/
 
