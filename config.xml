@@ -80,10 +80,5 @@
                 type="built-in"
             />
         </Dependencies>
-        <!-- <External_dependencies>
-            <SSL
-                local_path=
-            />
-        </External_dependencies> -->
     </Tests>
 </config>
