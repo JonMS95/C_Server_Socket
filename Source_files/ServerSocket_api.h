@@ -17,6 +17,10 @@ extern "C" {
 /******** Function prototypes ********/
 /*************************************/
 
+/// @brief Socket Finite State Machine (FSM).
+/// @param server_port Port number which the socket is going to be listening to.
+/// @param max_conn_num Maximum amount of allowed connections.
+/// @return < 0 if it failed.
 int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure);
 
 /*************************************/
