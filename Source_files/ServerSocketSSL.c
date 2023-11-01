@@ -2,8 +2,9 @@
 /******** Include statements ********/
 /************************************/
 
-#include "ServerSocketSSL.h"
 #include <openssl/err.h>    // OpenSSL errors.
+#include "ServerSocketSSL.h"
+#include "SeverityLog_api.h"
 
 /************************************/
 
@@ -19,6 +20,9 @@
 /// @return 1 if succeeded, < 1 if any error ocurred.
 int ServerSocketSSLSetup(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
 {
+    LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_CERT, cert_path);
+    LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY, priv_key_path);
+
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
