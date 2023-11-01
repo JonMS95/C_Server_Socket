@@ -34,14 +34,14 @@
 
 #define SIMULTANEOUS_CONNS_CHAR             'c'
 #define SIMULTANEOUS_CONNS_LONG             "Concurrent"
-#define SIMULTANEOUS_CONNS_DETAIL           "Max. number of concurrent conns."
+#define SIMULTANEOUS_CONNS_DETAIL           "Enable concurrency."
 #define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
 
 /********* Secure connection *********/
 
 #define SECURE_CONN_CHAR            's'
 #define SECURE_CONN_LONG            "Secure"
-#define SECURE_CONN_DETAIL          "Secure connection"
+#define SECURE_CONN_DETAIL          "Secure connection."
 #define SECURE_CONN_DEFAULT_VALUE   false
 
 /***************************************/
@@ -52,6 +52,7 @@
 int main(int argc, char** argv)
 {
     SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
+    SetSeverityLogPrintTimeStatus(true);
 
     int server_port         ;
     int max_clients_num     ;
