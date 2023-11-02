@@ -159,7 +159,7 @@ int SocketRead(int new_socket, bool secure, SSL** ssl)
     return read_from_socket;
 }
 
-/// @brief Diplays on console the amount of bytes provided on condition they are not equal to a LF or CRLF character.
+/// @brief Diplays on console the amount of bytes on condition they are not equal to an LF or CRLF character.
 /// @param bytes_read Number of bytes read by the buffer.
 /// @param rx_buffer Reception buffer from which the function is meant to read "bytes_read" bytes.
 void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
