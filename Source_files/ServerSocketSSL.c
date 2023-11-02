@@ -27,7 +27,7 @@ int ServerSocketSSLSetup(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_k
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
 
-    *ctx = SSL_CTX_new(SSLv23_server_method());
+    *ctx = SSL_CTX_new(TLS_server_method());
 
     if(*ctx == NULL)
     {
