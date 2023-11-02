@@ -6,6 +6,7 @@
 #include <unistd.h>         // Fork if concurrency is accepted.
 #include <string.h>         // strcpy
 #include <signal.h>         // Shutdown signal.
+#include <openssl/err.h>
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
 #include "ServerSocketConcurrency.h"
@@ -54,6 +55,19 @@ void SocketFreeResources(void)
         LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
         SSL_CTX_free(ctx);
     }
+
+    // To be revised:
+    ERR_free_strings();
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_remove_thread_state(NULL);
+    ERR_free_strings();
+    // ERR_remove_state(0); // Deprecated.
+    // ENGINE_cleanup();    // Doesn't seem to exist in openssl.
+    CONF_modules_unload(1);
+    CONF_modules_free();
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
 }
 
 /// @brief Handle SIGINT signal (Ctrl+C).
