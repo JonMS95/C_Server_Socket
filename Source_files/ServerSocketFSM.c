@@ -313,7 +313,6 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
 
             case SETUP_SSL:
             {
-                // WIP
                 if(!secure)
                 {
                     socket_fsm = OPTIONS;
