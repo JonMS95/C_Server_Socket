@@ -125,7 +125,11 @@ int SocketRead(int new_socket, bool secure, SSL** ssl)
     char greeting[SERVER_SOCKET_LEN_MSG_GREETING + 1];
     memset(greeting, 0, sizeof(greeting));
     sprintf(greeting, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
-    write(new_socket, greeting, sizeof(greeting));
+    
+    if(!secure)
+        write(new_socket, greeting, sizeof(greeting));
+    else
+        SSL_write(*ssl, greeting, sizeof(greeting));
 
     char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
     memset(rx_buffer, 0, sizeof(rx_buffer));
