@@ -134,24 +134,39 @@ int SocketRead(int new_socket, bool secure, SSL** ssl)
     char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
     memset(rx_buffer, 0, sizeof(rx_buffer));
 
-    ssize_t read_from_socket = 0;
+    // ssize_t read_from_socket = 0;
+    ssize_t read_from_socket = -1;
 
-    while(read_from_socket >= 0)
+    // while(read_from_socket >= 0)
+    while(read_from_socket != 0)
     {
         if(!secure)
-            read_from_socket = read(new_socket, rx_buffer, sizeof(rx_buffer));
-        else
-            read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
-
-        // Read data from buffer.
-        if (read_from_socket > 0)
         {
+            // read_from_socket = read(new_socket, rx_buffer, sizeof(rx_buffer));
+            read_from_socket = recv(new_socket, rx_buffer, sizeof(rx_buffer), MSG_DONTWAIT);
+        }
+        else
+        {
+            read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
+        }
+
+        if(read_from_socket == 0)
+            break;
+
+        if(read_from_socket < 0)
+            continue;
+
+        // // Read data from buffer.
+        // if (read_from_socket > 0)
+        // {
             SocketDisplayOnConsole(read_from_socket, rx_buffer);
             memset(rx_buffer, 0, read_from_socket);
-            continue;
-        }
+            // continue;
+        // }
         
-        break;
+        // sleep(1);
+
+        // break;
     }
 
     LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
