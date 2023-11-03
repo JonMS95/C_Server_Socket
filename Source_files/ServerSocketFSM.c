@@ -60,7 +60,7 @@ void SocketFreeResources(void)
     ERR_free_strings();
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
-    ERR_remove_thread_state(NULL);
+    // ERR_remove_thread_state(NULL);
     ERR_free_strings();
     // ERR_remove_state(0); // Deprecated.
     // ENGINE_cleanup();    // Doesn't seem to exist in openssl.
