@@ -7,7 +7,6 @@
 #include <unistd.h>         // Write socket.
 #include <string.h>         // strcpy
 #include <netinet/tcp.h>    // SO_KEEPALIVE
-#include <netinet/in.h>     // INET_ADDRSTRLEN
 #include "ServerSocketUse.h"
 #include "SeverityLog_api.h" // Severity Log.
 
@@ -92,107 +91,139 @@ int SocketListen(int socket_desc, int connections_number)
 
 /// @brief Accept an incoming connection.
 /// @param socket_desc Previously created socket descriptor.
-/// @return New socket instance, based on the socket descriptor.
+/// @return New socket instance, based on the socket descriptor, oriented to the client.
 int SocketAccept(int socket_desc)
 {
     // Wait for incoming connections.
     struct sockaddr_in client;
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
-    int new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
+
+    LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
+
+    int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
     LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     int keep_alive = 5;
-    int socket_options = setsockopt(new_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
+    int socket_options = setsockopt(client_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
-    return new_socket;
+    return client_socket;
 }
 
 
 /// @brief Reads from client. No perror statement exists within this function's definition, as read function can return something <= 0 if client gets disconnected.
-/// @param new_socket Socket instance, based on the previously defined socket descriptor. 
+/// @param client_socket Socket instance, based on the previously defined socket descriptor. 
 /// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
-int SocketRead(int new_socket, bool secure, SSL** ssl)
+int SocketInteract(int client_socket, bool secure, SSL** ssl)
 {
-    // Get client IP first, then Log it's IP address.
-    char client_IP_addr[INET_ADDRSTRLEN] = {};
-    struct sockaddr_in client;
-    socklen_t client_len = sizeof(client);
-    getpeername(new_socket, (struct sockaddr*)&client, &client_len);
-    inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
+    #include "ServerSocketDefaultInteract.h"
 
-    // Send a message to the client as soon as it is accepted.
-    char greeting[SERVER_SOCKET_LEN_MSG_GREETING + 1];
-    memset(greeting, 0, sizeof(greeting));
-    sprintf(greeting, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
+    SocketDefaultInteractFn(client_socket, secure, ssl);
+    // //////////////////////////////////////////////////////////////////////
+    // // START CUSTOM INTERACT FUNCTION
+    // //////////////////////////////////////////////////////////////////////
+
+    // ////////////////////////////////
+    // // GET THE CLIENT IP ADDR FIRST.
+    // ////////////////////////////////
+
+    // // Get client IP first, then Log it's IP address.
+    // char client_IP_addr[INET_ADDRSTRLEN] = {};
+    // struct sockaddr_in client;
+    // socklen_t client_len = sizeof(client);
+    // getpeername(client_socket, (struct sockaddr*)&client, &client_len);
+    // inet_ntop(AF_INET, &client.sin_addr, client_IP_addr, INET_ADDRSTRLEN);
+
+    // ///////////////////////////////////////////////////////////////////////////
+    // // END CLIENT IP ADDR RETRIEVAL.
+    // ///////////////////////////////////////////////////////////////////////////
+
+    // // Make the socket read non-blocking.
+    // #include <fcntl.h>
+
+    // // Fisrt, try to get socket's current flag set.
+    // int flags = fcntl(client_socket, F_GETFL, 0);
+    // if(flags < 0)
+    // {
+    //     LOG_ERR("ERROR WHILE GETTING SOCKET FLAGS.");
+    //     return -1;
+    // }
+
+    // // Then, set the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
+    // flags |= O_NONBLOCK;
+    // if(fcntl(client_socket, F_SETFL, flags) < 0)
+    // {
+    //     LOG_ERR("ERROR WHILE setting O_NONBLOCK flag.");
+    //     return -1;
+    // }
+
+    // char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
+    // memset(rx_buffer, 0, sizeof(rx_buffer));
+
+    // ssize_t read_from_socket = -1;
+
+    // while(read_from_socket > 0)
+    // {
+    //     if(!secure)
+    //     {
+    //         read_from_socket = read(client_socket, rx_buffer, sizeof(rx_buffer));
+    //     }
+    //     else
+    //     {
+    //         read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
+    //     }
+
+    //     // Check if the client is still connected, or if no data has been received.
+    //     if(read_from_socket == 0)
+    //     {
+    //         LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
+    //         break;
+    //     }
+
+    //     if(read_from_socket < 0)
+    //         break;
+
+    //     // If any data has been received, then display it on console.
+    //     // Remove possible ending new line and carriage return characters first
+    //     if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\n')
+    //         rx_buffer[strlen(rx_buffer) - 1] = 0;
+
+    //     if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\r')
+    //         rx_buffer[strlen(rx_buffer) - 1] = 0;
+
+    //     if(strlen(rx_buffer) > 0)
+    //     {
+    //         LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
+    //     }
+
+    //     // Clean the buffer after reading.
+    //     memset(rx_buffer, 0, read_from_socket);
+    // }
+
+    // // Send a message to the client as soon as it is accepted.
+    // char greeting[SERVER_SOCKET_LEN_MSG_GREETING + 1];
+    // memset(greeting, 0, sizeof(greeting));
+    // sprintf(greeting, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
     
-    if(!secure)
-        write(new_socket, greeting, sizeof(greeting));
-    else
-        SSL_write(*ssl, greeting, sizeof(greeting));
+    // if(!secure)
+    //     write(client_socket, greeting, sizeof(greeting));
+    // else
+    //     SSL_write(*ssl, greeting, sizeof(greeting));
 
-    char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
-    memset(rx_buffer, 0, sizeof(rx_buffer));
+    // //////////////////////////////////////////////////////////////////////
+    // // END CUSTOM INTERACT FUNCTION
+    // //////////////////////////////////////////////////////////////////////
 
-    // ssize_t read_from_socket = 0;
-    ssize_t read_from_socket = -1;
-
-    // while(read_from_socket >= 0)
-    while(read_from_socket != 0)
-    {
-        if(!secure)
-        {
-            // read_from_socket = read(new_socket, rx_buffer, sizeof(rx_buffer));
-            read_from_socket = recv(new_socket, rx_buffer, sizeof(rx_buffer), MSG_DONTWAIT);
-        }
-        else
-        {
-            read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
-        }
-
-        if(read_from_socket == 0)
-            break;
-
-        if(read_from_socket < 0)
-            continue;
-
-        // // Read data from buffer.
-        // if (read_from_socket > 0)
-        // {
-            SocketDisplayOnConsole(read_from_socket, rx_buffer);
-            memset(rx_buffer, 0, read_from_socket);
-            // continue;
-        // }
-        
-        // sleep(1);
-
-        // break;
-    }
-
-    LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
-
-    return read_from_socket;
-}
-
-/// @brief Diplays on console the amount of bytes on condition they are not equal to an LF or CRLF character.
-/// @param bytes_read Number of bytes read by the buffer.
-/// @param rx_buffer Reception buffer from which the function is meant to read "bytes_read" bytes.
-void SocketDisplayOnConsole(int bytes_read, char* rx_buffer)
-{
-    if( !((bytes_read == (strlen("\n"))   && strcmp(rx_buffer, "\n")   == 0) ||
-          (bytes_read == (strlen("\r\n")) && strcmp(rx_buffer, "\r\n") == 0)))
-    {
-        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
-    }
+    return 0;
 }
 
 /// @brief Closes the socket.
-/// @param new_socket ID of the socket that is meant to be closed.
+/// @param client_socket ID of the socket that is meant to be closed.
 /// @return < 0 if close failed.
-int CloseSocket(int new_socket)
+int CloseSocket(int client_socket)
 {
     // Close the socket.
-    int close_socket = close(new_socket);
+    int close_socket = close(client_socket);
 
     return close_socket;
 }
