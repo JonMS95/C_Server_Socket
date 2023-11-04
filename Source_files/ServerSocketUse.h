@@ -19,6 +19,7 @@
 #define SERVER_SOCKET_LEN_MSG_GREETING          100
 #define SERVER_SOCKET_LEN_RX_BUFFER             256     // RX buffer size.
 #define SERVER_SOCKET_MSG_GREETING              "Hello client!\r\nYour IP address is: %s\r\n"
+#define SERVER_SOCKET_MSG_WATING_INCOMING_CONN  "Waiting for an incoming connection to happen."
 #define SERVER_SOCKET_MSG_CLIENT_ACCEPTED       "Connection accepted. Client's IP address: <%s>"
 #define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
 #define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from RX buffer: <%s>"
@@ -35,8 +36,7 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
 int BindSocket(int socket_desc, struct sockaddr_in server);
 int SocketListen(int socket_desc, int connections_number);
 int SocketAccept(int socket_desc);
-int SocketRead(int new_socket, bool secure, SSL** ssl);
-void SocketDisplayOnConsole(int bytes_read, char* rx_buffer);
+int SocketInteract(int new_socket, bool secure, SSL** ssl);
 int CloseSocket(int new_socket);
 
 /*************************************/
