@@ -36,8 +36,8 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
 int BindSocket(int socket_desc, struct sockaddr_in server);
 int SocketListen(int socket_desc, int connections_number);
 int SocketAccept(int socket_desc);
-int SocketInteract(int new_socket, bool secure, SSL** ssl);
-int CloseSocket(int new_socket);
+int SocketInteract(int client_socket, bool secure, SSL** ssl);
+int CloseSocket(int client_socket);
 
 /*************************************/
 
