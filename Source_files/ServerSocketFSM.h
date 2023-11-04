@@ -67,7 +67,7 @@ typedef enum
     MANAGE_CONCURRENCY  ,
     REFUSE              ,
     SSL_HANDSHAKE       ,
-    READ                ,
+    INTERACT            ,
     CLOSE               ,
 
 } SOCKET_FSM;
@@ -86,7 +86,7 @@ int SocketStateListen(int socket_desc, int max_conn_num);
 int SocketStateAccept(int socket_desc);
 int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
 int SocketStateRefuse(int client_socket);
-int SocketStateRead(int client_socket, bool secure, SSL** ssl);
+int SocketStateInteract(int client_socket, bool secure, SSL** ssl);
 int SocketStateClose(int client_socket);
 
 /*************************************/

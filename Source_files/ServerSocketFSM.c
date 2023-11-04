@@ -260,9 +260,9 @@ int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
 /// @brief Read data received in the socket.
 /// @param client_socket Socket file descriptor.
 /// @return <= 0 if it failed to read.
-int SocketStateRead(int client_socket, bool secure, SSL** ssl)
+int SocketStateInteract(int client_socket, bool secure, SSL** ssl)
 {
-    int read = SocketRead(client_socket, secure, ssl);
+    int read = SocketInteract(client_socket, secure, ssl);
 
     return read;
 }
@@ -407,20 +407,20 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             {
                 if(!secure)
                 {
-                    socket_fsm = READ;
+                    socket_fsm = INTERACT;
                     continue;
                 }
 
                 if(SocketStateSSLHandshake(client_socket, &ctx, &ssl) >= 0)
-                    socket_fsm = READ;
+                    socket_fsm = INTERACT;
                 else
                     socket_fsm = ACCEPT;
             }
             break;
 
-            case READ:
+            case INTERACT:
             {
-                if(SocketStateRead(client_socket, secure, &ssl) <= 0)
+                if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
                 {
                     if(concurrent)
                         socket_fsm = CLOSE;
