@@ -62,7 +62,6 @@ static int ServerSocketSetNonBlocking(int client_socket)
     return 0;
 }
 
-// TO DO: REFORMAT THE DOXYGEN COMMENT ABOVE BY FOLLOWING THE FORMAT SHOWN BELOW.
 /// @brief Reads from client, then sends a response.
 /// @param client_socket Client socket.
 /// @param secure True if TLS security is wanted, false otherwise.
