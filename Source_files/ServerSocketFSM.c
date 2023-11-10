@@ -11,6 +11,7 @@
 #include "ServerSocketFSM.h"
 #include "ServerSocketConcurrency.h"
 #include "ServerSocketSSL.h"
+#include "ServerSocketDefaultInteract.h"
 #include "SeverityLog_api.h"
 
 /************************************/
@@ -20,9 +21,13 @@
 /***********************************/
 
 static volatile int ctrlCPressed        = 0;
+
 static pid_t*       server_instances    = NULL;
 static SSL_CTX*     ctx                 = NULL;
 static SSL*         ssl                 = NULL;
+
+/// @brief TO DO: Add Doxygen comment.
+static int (*SocketStateInteract)(int client_socket, bool secure, SSL** ssl)  = &SocketDefaultInteractFn;
 
 /***********************************/
 
@@ -252,15 +257,15 @@ int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
     return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
 }
 
-/// @brief Read data received in the socket.
-/// @param client_socket Socket file descriptor.
-/// @return <= 0 if it failed to read.
-int SocketStateInteract(int client_socket, bool secure, SSL** ssl)
-{
-    int read = SocketInteract(client_socket, secure, ssl);
+// /// @brief Read data received in the socket.
+// /// @param client_socket Socket file descriptor.
+// /// @return <= 0 if it failed to read.
+// int SocketStateInteract(int client_socket, bool secure, SSL** ssl)
+// {
+//     int read = SocketInteract(client_socket, secure, ssl);
 
-    return read;
-}
+//     return read;
+// }
 
 /// @brief Close socket.
 /// @param client_socket Socket file descriptor.
@@ -281,12 +286,15 @@ int SocketStateClose(int client_socket)
 /// @param server_port Port number which the socket is going to be listening to.
 /// @param max_conn_num Maximum amount of allowed connections.
 /// @return < 0 if it failed.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* key_path)
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* key_path, int (*CustomSocketStateInteract)(int client_socket, bool secure, SSL** ssl))
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int client_socket;
     server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
+
+    if(CustomSocketStateInteract != NULL)
+        SocketStateInteract = CustomSocketStateInteract;
 
     if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
     {
@@ -415,6 +423,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
 
             case INTERACT:
             {
+                // if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
                 if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
                 {
                     if(concurrent)
