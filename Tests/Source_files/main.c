@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, CERT_FILE, KEY_FILE);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, CERT_FILE, KEY_FILE, NULL);
 
     return 0;
 }
