@@ -10,9 +10,17 @@
 
 /*************************************/
 
-/// @brief Reads from client. No perror statement exists within this function's definition, as read function can return something <= 0 if client gets disconnected.
-/// @param client_socket Socket instance, based on the previously defined socket descriptor. 
-/// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
+/*************************************/
+/******** Function prototypes ********/
+/*************************************/
+
+/// @brief Reads from client, then sends a response.
+/// @param client_socket Client socket.
+/// @param secure True if TLS security is wanted, false otherwise.
+/// @param ssl SSL data.
+/// @return < 0 if any error happened, 0 otherwise.
 int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl);
+
+/*************************************/
 
 #endif
