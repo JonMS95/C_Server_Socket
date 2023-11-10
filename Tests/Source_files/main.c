@@ -44,6 +44,11 @@
 #define SECURE_CONN_DETAIL          "Secure connection."
 #define SECURE_CONN_DEFAULT_VALUE   false
 
+/********* Certificate and private key path *********/
+
+#define CERT_FILE   "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
+#define KEY_FILE    "/home/jon/Desktop/scripts/certificate_test/private.key"
+
 /***************************************/
 
 /*
@@ -96,7 +101,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, CERT_FILE, KEY_FILE);
 
     return 0;
 }
