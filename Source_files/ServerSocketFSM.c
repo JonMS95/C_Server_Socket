@@ -15,11 +15,6 @@
 
 /************************************/
 
-///////////////////////////////////////////////
-// WIP
-#define CERT_FILE   "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
-#define KEY_FILE    "/home/jon/Desktop/scripts/certificate_test/private.key"
-
 /***********************************/
 /******** Private variables ********/
 /***********************************/
@@ -104,7 +99,7 @@ int SocketStateCreate(void)
 /// @return 0 if succeeded, < 0 otherwise.
 int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
 {
-    int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, CERT_FILE, KEY_FILE);
+    int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, cert_path, priv_key_path);
 
     if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
         LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
@@ -286,7 +281,7 @@ int SocketStateClose(int client_socket)
 /// @param server_port Port number which the socket is going to be listening to.
 /// @param max_conn_num Maximum amount of allowed connections.
 /// @return < 0 if it failed.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure)
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* key_path)
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
@@ -319,7 +314,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
                     continue;
                 }
                 
-                if(SocketStateSetupSSL(&ctx, &ssl, CERT_FILE, KEY_FILE) < 0)
+                if(SocketStateSetupSSL(&ctx, &ssl, cert_path, key_path) < 0)
                     socket_fsm = CLOSE;
                 else
                     socket_fsm = OPTIONS;
