@@ -77,15 +77,16 @@ typedef enum
 /******** Function prototypes ********/
 /*************************************/
 
-void SocketSIGINTHandler(int signum);
-int SocketStateCreate(void);
-int SocketStateOptions(int socket_desc);
-int SocketStateBind(int socket_desc, int server_port);
-int SocketStateListen(int socket_desc, int max_conn_num);
-int SocketStateAccept(int socket_desc);
-int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
-int SocketStateRefuse(int client_socket);
-int SocketStateClose(int client_socket);
+static void SocketFreeResources(void);
+static void SocketSIGINTHandler(int signum);
+static int SocketStateCreate(void);
+static int SocketStateOptions(int socket_desc);
+static int SocketStateBind(int socket_desc, int server_port);
+static int SocketStateListen(int socket_desc, int max_conn_num);
+static int SocketStateAccept(int socket_desc);
+static int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
+static int SocketStateRefuse(int client_socket);
+static int SocketStateClose(int client_socket);
 
 /*************************************/
 
