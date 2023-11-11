@@ -22,7 +22,7 @@
 #define SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS  "Error while setting O_NONBLOCK flag."
 
 #define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>"
-#define SERVER_SOCKET_MSG_GREETING              "Hello client!\r\nYour IP address is: %s\r\n"
+#define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>"
 #define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
 
 /************************************/
