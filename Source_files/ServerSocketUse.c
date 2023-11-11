@@ -110,19 +110,6 @@ int SocketAccept(int socket_desc)
     return client_socket;
 }
 
-
-/// @brief Reads from client. No perror statement exists within this function's definition, as read function can return something <= 0 if client gets disconnected.
-/// @param client_socket Socket instance, based on the previously defined socket descriptor. 
-/// @return <= 0 if read failed. The state where something > 0 is returned should never be reached by now.
-int SocketInteract(int client_socket, bool secure, SSL** ssl)
-{
-    #include "ServerSocketDefaultInteract.h"
-
-    SocketDefaultInteractFn(client_socket, secure, ssl);
-
-    return 0;
-}
-
 /// @brief Closes the socket.
 /// @param client_socket ID of the socket that is meant to be closed.
 /// @return < 0 if close failed.
