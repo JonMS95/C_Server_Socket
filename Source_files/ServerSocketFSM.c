@@ -40,7 +40,7 @@ static int (*SocketStateInteract)(int client_socket, bool secure, SSL** ssl)  = 
 /*************************************/
 
 /// @brief Frees previously heap allocated memory before exiting the program.
-void SocketFreeResources(void)
+static void SocketFreeResources(void)
 {
     if(server_instances != NULL)
     {
@@ -72,7 +72,7 @@ void SocketFreeResources(void)
 
 /// @brief Handle SIGINT signal (Ctrl+C).
 /// @param signum Signal number (SIGINT by default).
-void SocketSIGINTHandler(int signum)
+static void SocketSIGINTHandler(int signum)
 {
     LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
     ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
@@ -84,7 +84,7 @@ void SocketSIGINTHandler(int signum)
 
 /// @brief Create socket descriptor.
 /// @return < 0 if it failed to create the socket.
-int SocketStateCreate(void)
+static int SocketStateCreate(void)
 {
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
@@ -102,7 +102,7 @@ int SocketStateCreate(void)
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 0 if succeeded, < 0 otherwise.
-int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
+static int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, cert_path, priv_key_path);
 
@@ -117,7 +117,7 @@ int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_ke
 /// @brief Set socket options.
 /// @param socket_desc Socket file descriptor.
 /// @return < 0 if it failed to set options.
-int SocketStateOptions(int socket_desc)
+static int SocketStateOptions(int socket_desc)
 {
     int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
 
@@ -133,7 +133,7 @@ int SocketStateOptions(int socket_desc)
 /// @param socket_desc Socket file descriptor.
 /// @param server_port The port which is going to be used to listen to incoming connections.
 /// @return < 0 if it failed to bind.
-int SocketStateBind(int socket_desc, int server_port)
+static int SocketStateBind(int socket_desc, int server_port)
 {
     struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
@@ -151,7 +151,7 @@ int SocketStateBind(int socket_desc, int server_port)
 /// @param socket_desc Socket file descriptor.
 /// @param max_conn_num Maximum connections number.
 /// @return < 0 if it failed to listen.
-int SocketStateListen(int socket_desc, int max_conn_num)
+static int SocketStateListen(int socket_desc, int max_conn_num)
 {
     int listen = SocketListen(socket_desc, max_conn_num);
 
@@ -166,7 +166,7 @@ int SocketStateListen(int socket_desc, int max_conn_num)
 /// @brief Accept an incoming connection.
 /// @param socket_desc Socket file descriptor.
 /// @return < 0 if it failed to accept the connection.
-int SocketStateAccept(int socket_desc)
+static int SocketStateAccept(int socket_desc)
 {
     int client_socket = SocketAccept(socket_desc);
 
@@ -183,7 +183,7 @@ int SocketStateAccept(int socket_desc)
 /// @param server_instance_processes Array which contains PIDs of each running server socket instance.
 /// @param max_conn_num Maximum amount of allowed clients (== server socket instances).
 /// @return < 0 if new instance could not be created. Otherwise, 0 if current process is parent, 1 if it is child server isntance.
-int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num)
+static int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num)
 {
     // Check if any server socket instance may be created.
     int possible_new_instance = ServerSocketPossibleNewInstance(server_instance_processes, max_conn_num);
@@ -224,7 +224,7 @@ int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_proce
 /// @brief Refuse incoming connection. To be called when there are no free spots for a new server instance.
 /// @param client_socket Client socket descriptor.
 /// @return < 0 if any error happened while trying to close the socket.
-int SocketStateRefuse(int client_socket)
+static int SocketStateRefuse(int client_socket)
 {
     char refusal_msg[SERVER_SOCKET_LEN_MSG_REFUSE] = {};
     sprintf(refusal_msg, SERVER_SOCKET_MSG_REFUSE, SERVER_SOCKET_SECONDS_AFTER_REFUSAL);
@@ -245,7 +245,7 @@ int SocketStateRefuse(int client_socket)
 /// @param ctx SSL context.
 /// @param ssl SSL data.
 /// @return 0 if handhsake was successfully performed, < 0 otherwise.
-int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
+static int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
 {
     int ssl_handshake = ServerSocketSSLHandshake(client_socket, ctx, ssl);
 
@@ -260,7 +260,7 @@ int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
 /// @brief Close socket.
 /// @param client_socket Socket file descriptor.
 /// @return < 0 if it failed to close the socket.
-int SocketStateClose(int client_socket)
+static int SocketStateClose(int client_socket)
 {
     int close = CloseSocket(client_socket);
     
@@ -272,10 +272,15 @@ int SocketStateClose(int client_socket)
     return close;    
 }
 
-/// @brief Socket Finite State Machine (FSM).
-/// @param server_port Port number which the socket is going to be listening to.
-/// @param max_conn_num Maximum amount of allowed connections.
-/// @return < 0 if it failed.
+/// @brief Runs server socket.
+/// @param server_port Port server is meant to be listening to.
+/// @param max_conn_num Maximum number of connections.
+/// @param concurrent Enable concurrent server instances.
+/// @param secure Enable secure communication (TLS).
+/// @param cert_path Path to server ceritificate.
+/// @param key_path Path to server private key.
+/// @param CustomSocketStateInteract Custom function to interact with client once connection is established.
+/// @return 0 always, exit sending failure signal if SIGINT signal handler could not be properly set.
 int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* key_path, int (*CustomSocketStateInteract)(int client_socket, bool secure, SSL** ssl))
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
