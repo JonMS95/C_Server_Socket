@@ -4,8 +4,9 @@
 
 #include <stdlib.h>         // malloc, calloc, realloc, free.
 #include <unistd.h>         // Fork if concurrency is accepted.
-#include <string.h>         // strcpy
+#include <string.h>         // strlen
 #include <signal.h>         // Shutdown signal.
+#include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
