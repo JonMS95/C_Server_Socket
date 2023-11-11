@@ -257,16 +257,6 @@ int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
     return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
 }
 
-// /// @brief Read data received in the socket.
-// /// @param client_socket Socket file descriptor.
-// /// @return <= 0 if it failed to read.
-// int SocketStateInteract(int client_socket, bool secure, SSL** ssl)
-// {
-//     int read = SocketInteract(client_socket, secure, ssl);
-
-//     return read;
-// }
-
 /// @brief Close socket.
 /// @param client_socket Socket file descriptor.
 /// @return < 0 if it failed to close the socket.
@@ -423,7 +413,6 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
 
             case INTERACT:
             {
-                // if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
                 if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
                 {
                     if(concurrent)
