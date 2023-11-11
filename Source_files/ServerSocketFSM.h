@@ -6,7 +6,6 @@
 /************************************/
 
 #include <sys/types.h>      // pid_t type.
-#include <openssl/ssl.h>
 #include "ServerSocket_api.h"
 
 /************************************/
@@ -86,7 +85,6 @@ int SocketStateListen(int socket_desc, int max_conn_num);
 int SocketStateAccept(int socket_desc);
 int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
 int SocketStateRefuse(int client_socket);
-// int SocketStateInteract(int client_socket, bool secure, SSL** ssl);
 int SocketStateClose(int client_socket);
 
 /*************************************/
