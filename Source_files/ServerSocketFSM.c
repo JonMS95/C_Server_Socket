@@ -39,7 +39,7 @@ static int (*SocketStateInteract)(int client_socket, bool secure, SSL** ssl)  = 
 /******* Function definitions ********/
 /*************************************/
 
-// WIP
+/// @brief Frees previously heap allocated memory before exiting the program.
 void SocketFreeResources(void)
 {
     if(server_instances != NULL)
@@ -60,14 +60,10 @@ void SocketFreeResources(void)
         SSL_CTX_free(ctx);
     }
 
-    // To be revised:
     ERR_free_strings();
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
-    // ERR_remove_thread_state(NULL);
     ERR_free_strings();
-    // ERR_remove_state(0); // Deprecated.
-    // ENGINE_cleanup();    // Doesn't seem to exist in openssl.
     CONF_modules_unload(1);
     CONF_modules_free();
     EVP_cleanup();
