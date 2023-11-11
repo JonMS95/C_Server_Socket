@@ -26,7 +26,11 @@ static pid_t*       server_instances    = NULL;
 static SSL_CTX*     ctx                 = NULL;
 static SSL*         ssl                 = NULL;
 
-/// @brief TO DO: Add Doxygen comment.
+/// @brief Pointer to a function which is meant to interact with the client.
+/// @param client_socket Client socket.
+/// @param secure True if TLS security is wanted, false otherwise.
+/// @param ssl SSL data.
+/// @return < 0 if any error happened, 0 otherwise.
 static int (*SocketStateInteract)(int client_socket, bool secure, SSL** ssl)  = &SocketDefaultInteractFn;
 
 /***********************************/
