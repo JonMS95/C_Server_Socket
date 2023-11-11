@@ -7,8 +7,6 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <stdbool.h>    // secure input parameter.
-#include <openssl/ssl.h>    // SSL read.
 
 /************************************/
 
@@ -31,7 +29,6 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
 int BindSocket(int socket_desc, struct sockaddr_in server);
 int SocketListen(int socket_desc, int connections_number);
 int SocketAccept(int socket_desc);
-int SocketInteract(int client_socket, bool secure, SSL** ssl);
 int CloseSocket(int client_socket);
 
 /*************************************/
