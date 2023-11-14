@@ -109,13 +109,13 @@ int main(int argc, char** argv)
                                 CERT_OPT_LONG     ,
                                 CERT_OPT_DETAIL   ,
                                 CERT_DEFAULT_VALUE,
-                                &path_cert);
+                                path_cert);
 
     SetOptionDefinitionStringNL(PKEY_OPT_CHAR     ,
                                 PKEY_OPT_LONG     ,
                                 PKEY_OPT_DETAIL   ,
                                 PKEY_DEFAULT_VALUE,
-                                &path_pkey);
+                                path_pkey);
 
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
