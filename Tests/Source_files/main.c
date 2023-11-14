@@ -14,8 +14,8 @@
 
 /************ Port settings ************/
 
-#define PORT_OPT_CHAR       'p'
-#define PORT_OPT_LONG       "Port"
+#define PORT_OPT_CHAR       'r'
+#define PORT_OPT_LONG       "Port_range"
 #define PORT_OPT_DETAIL     "Range of acceptable port numbers."
 #define PORT_MIN_VALUE      49152
 #define PORT_MAX_VALUE      65535
@@ -32,8 +32,8 @@
 
 /********* Enable concurrency *********/
 
-#define SIMULTANEOUS_CONNS_CHAR             'c'
-#define SIMULTANEOUS_CONNS_LONG             "Concurrent"
+#define SIMULTANEOUS_CONNS_CHAR             'p'
+#define SIMULTANEOUS_CONNS_LONG             "Parallel"
 #define SIMULTANEOUS_CONNS_DETAIL           "Enable concurrency."
 #define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
 
@@ -46,8 +46,19 @@
 
 /********* Certificate and private key path *********/
 
-#define CERT_FILE   "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
-#define KEY_FILE    "/home/jon/Desktop/scripts/certificate_test/private.key"
+/************ Server certificate ************/
+
+#define CERT_OPT_CHAR       'c'
+#define CERT_OPT_LONG       "Certificate"
+#define CERT_OPT_DETAIL     "Server certificate."
+#define CERT_DEFAULT_VALUE  "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
+
+/************ Server private key ************/
+
+#define PKEY_OPT_CHAR       'k'
+#define PKEY_OPT_LONG       "Key"
+#define PKEY_OPT_DETAIL     "Server private key."
+#define PKEY_DEFAULT_VALUE  "/home/jon/Desktop/scripts/certificate_test/private.key"
 
 /***************************************/
 
@@ -63,6 +74,8 @@ int main(int argc, char** argv)
     int max_clients_num     ;
     bool concurrency_enabled;
     bool secure_connection;
+    char* path_cert = calloc(100, 1);
+    char* path_pkey = calloc(100, 1);
 
     SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
                                 SIMULTANEOUS_CONNS_LONG             ,
@@ -92,6 +105,18 @@ int main(int argc, char** argv)
                                 SECURE_CONN_DEFAULT_VALUE   ,
                                 &secure_connection          );
 
+    SetOptionDefinitionStringNL(CERT_OPT_CHAR     ,
+                                CERT_OPT_LONG     ,
+                                CERT_OPT_DETAIL   ,
+                                CERT_DEFAULT_VALUE,
+                                &path_cert);
+
+    SetOptionDefinitionStringNL(PKEY_OPT_CHAR     ,
+                                PKEY_OPT_LONG     ,
+                                PKEY_OPT_DETAIL   ,
+                                PKEY_DEFAULT_VALUE,
+                                &path_pkey);
+
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
     {
@@ -101,7 +126,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, CERT_FILE, KEY_FILE, NULL);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, path_cert, path_pkey, NULL);
 
     return 0;
 }
