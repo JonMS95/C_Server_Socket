@@ -73,4 +73,24 @@ int ServerSocketSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
     return ssl_accept;
 }
 
+
+/// @brief Expand path to server certificate and / or private key.
+/// @param dest_expanded_path Expanded path destination.
+/// @param src_short_path 
+void ServerSocketSSLExpandPath(char** dest_expanded_path, char** src_short_path)
+{
+    if ((*src_short_path)[0] != '~') {
+        *dest_expanded_path = calloc(strlen(*src_short_path) + 1, sizeof(char));
+        strcpy(*dest_expanded_path, *src_short_path);
+        return;
+    }
+
+    const char* home_dir = getenv(SERVER_SOCKET_HOME_OS_DIR_NAME);
+
+    *dest_expanded_path = calloc(strlen(home_dir) + strlen(*src_short_path) + 1, sizeof(char));
+
+    strcpy(*dest_expanded_path, home_dir);
+    strcpy(*dest_expanded_path + strlen(home_dir), *src_short_path + 1);
+}
+
 /*************************************/
