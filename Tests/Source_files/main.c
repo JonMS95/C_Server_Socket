@@ -51,14 +51,14 @@
 #define CERT_OPT_CHAR       'c'
 #define CERT_OPT_LONG       "Certificate"
 #define CERT_OPT_DETAIL     "Server certificate."
-#define CERT_DEFAULT_VALUE  "/home/jon/Desktop/scripts/certificate_test/certificate.crt"
+#define CERT_DEFAULT_VALUE  "~/Desktop/scripts/certificate_test/certificate.crt"
 
 /************ Server private key ************/
 
 #define PKEY_OPT_CHAR       'k'
 #define PKEY_OPT_LONG       "Key"
 #define PKEY_OPT_DETAIL     "Server private key."
-#define PKEY_DEFAULT_VALUE  "/home/jon/Desktop/scripts/certificate_test/private.key"
+#define PKEY_DEFAULT_VALUE  "~/Desktop/scripts/certificate_test/private.key"
 
 /***************************************/
 
