@@ -2,8 +2,8 @@
 <config>
     <Project_data
         version_major="1"
-        version_minor="0"
-        version_mode="RELEASE"
+        version_minor="1"
+        version_mode="DEBUG"
         URL="https://github.com/JonMS95/C_Server_Socket"
         type="library"
         language="C"
@@ -28,7 +28,7 @@
     <!-- Common shell files location -->
     <Common_shell_files
         version_major="1"
-        version_minor="0"
+        version_minor="1"
         version_mode="RELEASE"
         local_path="~/Desktop/scripts/C/C_Common_shell_files"
         URL="https://github.com/JonMS95/C_Common_shell_files"
@@ -39,17 +39,10 @@
     <Dependencies Dest="Dependency_files">
         <C_Severity_Log
             version_major="1"
-            version_minor="0"
+            version_minor="1"
             version_mode="RELEASE"
             local_path="~/Desktop/scripts/C/C_Severity_Log"
             URL="https://github.com/JonMS95/C_Severity_Log"
-        />
-        <C_Arg_Parse
-            version_major="1"
-            version_minor="0"
-            version_mode="RELEASE"
-            local_path="~/Desktop/scripts/C/C_Arg_Parse"
-            URL="https://github.com/JonMS95/C_Arg_Parse"
         />
     </Dependencies>
 
@@ -59,24 +52,32 @@
         <Dependencies Dest="Tests/Dependency_files">
             <C_Severity_Log
                 version_major="1"
-                version_minor="0"
+                version_minor="1"
                 version_mode="RELEASE"
                 local_path="~/Desktop/scripts/C/C_Severity_Log"
                 URL="https://github.com/JonMS95/C_Severity_Log"
             />
             <C_Arg_Parse
                 version_major="1"
-                version_minor="0"
+                version_minor="2"
                 version_mode="RELEASE"
                 local_path="~/Desktop/scripts/C/C_Arg_Parse"
                 URL="https://github.com/JonMS95/C_Arg_Parse"
             />
             <C_Server_Socket
                 version_major="1"
-                version_minor="0"
-                version_mode="RELEASE"
+                version_minor="1"
+                version_mode="DEBUG"
                 local_path="~/Desktop/scripts/C/C_Server_Socket"
                 URL="https://github.com/JonMS95/C_Server_Socket"
+            />
+            <SSL
+                local_path="/usr/lib/x86_64-linux-gnu/libssl.so"
+                type="built-in"
+            />
+            <Crypto
+                local_path="/usr/lib/x86_64-linux-gnu/libcrypto.so"
+                type="built-in"
             />
         </Dependencies>
     </Tests>

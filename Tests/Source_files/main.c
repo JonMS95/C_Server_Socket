@@ -1,30 +1,64 @@
-#include <stdlib.h>
-#include <string.h>     // memset, strlen
+/************************************/
+/******** Include statements ********/
+/************************************/
 
 #include "ServerSocket_api.h"
 #include "GetOptions_api.h"
 #include "SeverityLog_api.h"
 
+/************************************/
+
+/***************************************/
 /********** Private constants **********/
 /***************************************/
 
 /************ Port settings ************/
 
-#define PORT_OPT_CHAR       'p'
-#define PORT_OPT_LONG       "Port"
-#define PORT_OPT_DETAIL     "Range of acceptable port numbers"
+#define PORT_OPT_CHAR       'r'
+#define PORT_OPT_LONG       "Port_range"
+#define PORT_OPT_DETAIL     "Range of acceptable port numbers."
 #define PORT_MIN_VALUE      49152
 #define PORT_MAX_VALUE      65535
 #define PORT_DEFAULT_VALUE  50000
 
 /********* Connection settings *********/
 
-#define CONN_OPT_CHAR       'c'
-#define CONN_OPT_LONG       "Connections"
-#define CONN_OPT_DETAIL     "Maximum number of connections"
-#define CONN_MIN_VALUE      1
-#define CONN_MAX_VALUE      3
-#define CONN_DEFAULT_VALUE  1
+#define CLIENTS_OPT_CHAR        'm'
+#define CLIENTS_OPT_LONG        "Clients"
+#define CLIENTS_OPT_DETAIL      "Maximum number of clients."
+#define CLIENTS_MIN_VALUE       1
+#define CLIENTS_MAX_VALUE       3
+#define CLIENTS_DEFAULT_VALUE   1
+
+/********* Enable concurrency *********/
+
+#define SIMULTANEOUS_CONNS_CHAR             'p'
+#define SIMULTANEOUS_CONNS_LONG             "Parallel"
+#define SIMULTANEOUS_CONNS_DETAIL           "Enable concurrency."
+#define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
+
+/********* Secure connection *********/
+
+#define SECURE_CONN_CHAR            's'
+#define SECURE_CONN_LONG            "Secure"
+#define SECURE_CONN_DETAIL          "Secure connection."
+#define SECURE_CONN_DEFAULT_VALUE   false
+
+/********* Certificate and private key path *********/
+
+/************ Server certificate ************/
+
+#define CERT_OPT_CHAR       'c'
+#define CERT_OPT_LONG       "Certificate"
+#define CERT_OPT_DETAIL     "Server certificate."
+#define CERT_DEFAULT_VALUE  "~/Desktop/scripts/certificate_test/certificate.crt"
+
+/************ Server private key ************/
+
+#define PKEY_OPT_CHAR       'k'
+#define PKEY_OPT_LONG       "Key"
+#define PKEY_OPT_DETAIL     "Server private key."
+#define PKEY_DEFAULT_VALUE  "~/Desktop/scripts/certificate_test/private.key"
 
 /***************************************/
 
@@ -34,9 +68,20 @@
 int main(int argc, char** argv)
 {
     SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
+    SetSeverityLogPrintTimeStatus(true);
 
-    int server_port;
-    int max_conn_num;
+    int server_port         ;
+    int max_clients_num     ;
+    bool concurrency_enabled;
+    bool secure_connection;
+    char* path_cert = calloc(100, 1);
+    char* path_pkey = calloc(100, 1);
+
+    SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
+                                SIMULTANEOUS_CONNS_LONG             ,
+                                SIMULTANEOUS_CONNS_DETAIL           ,
+                                SIMULTANEOUS_CONNS_DEFAULT_VALUE    ,
+                                &concurrency_enabled                );
 
     SetOptionDefinitionInt( PORT_OPT_CHAR       ,
                             PORT_OPT_LONG       ,
@@ -46,13 +91,31 @@ int main(int argc, char** argv)
                             PORT_DEFAULT_VALUE  ,
                             &server_port        );
 
-    SetOptionDefinitionInt( CONN_OPT_CHAR       ,
-                            CONN_OPT_LONG       ,
-                            CONN_OPT_DETAIL     ,
-                            CONN_MIN_VALUE      ,
-                            CONN_MAX_VALUE      ,
-                            CONN_DEFAULT_VALUE  ,
-                            &max_conn_num       );
+    SetOptionDefinitionInt( CLIENTS_OPT_CHAR        ,
+                            CLIENTS_OPT_LONG        ,
+                            CLIENTS_OPT_DETAIL      ,
+                            CLIENTS_MIN_VALUE       ,
+                            CLIENTS_MAX_VALUE       ,
+                            CLIENTS_DEFAULT_VALUE   ,
+                            &max_clients_num        );
+
+    SetOptionDefinitionBool(    SECURE_CONN_CHAR            ,
+                                SECURE_CONN_LONG            ,
+                                SECURE_CONN_DETAIL          ,
+                                SECURE_CONN_DEFAULT_VALUE   ,
+                                &secure_connection          );
+
+    SetOptionDefinitionStringNL(CERT_OPT_CHAR     ,
+                                CERT_OPT_LONG     ,
+                                CERT_OPT_DETAIL   ,
+                                CERT_DEFAULT_VALUE,
+                                path_cert);
+
+    SetOptionDefinitionStringNL(PKEY_OPT_CHAR     ,
+                                PKEY_OPT_LONG     ,
+                                PKEY_OPT_DETAIL   ,
+                                PKEY_DEFAULT_VALUE,
+                                path_pkey);
 
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
@@ -63,7 +126,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_conn_num);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, path_cert, path_pkey, NULL);
 
     return 0;
 }
