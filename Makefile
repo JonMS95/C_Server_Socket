@@ -48,10 +48,12 @@ ifeq ($(LIBRARY_LANG), C)
 	COMP := $(CC)
 	CFLAGS := $(DEBUG_INFO)
 	FLAGS := $(CFLAGS)
+	VISIBILITY := -fvisibility=hidden
 else ifeq ($(LIBRARY_LANG), C++)
 	COMP := $(CXX)
 	CXXFLAGS := $(DEBUG_INFO)
 	FLAGS := $(CXXFLAGS)
+	VISIBILITY := 
 endif
 
 # Basic system dependencies
@@ -160,7 +162,7 @@ deps:
 	@bash $(SHELL_SYM_LINKS)
 
 $(LIB_SO): $(LIB_SOURCES)
-	$(COMP) $(FLAGS) -I$(HEADER_DEPS_DIR) -fPIC -shared $(LIB_SOURCES) -o $(LIB_SO)
+	$(COMP) $(VISIBILITY) $(FLAGS) -I$(HEADER_DEPS_DIR) -fPIC -shared $(LIB_SOURCES) -o $(LIB_SO)
 
 so_lib: $(LIB_SO)
 
