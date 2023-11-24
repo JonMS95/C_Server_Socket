@@ -15,6 +15,14 @@ extern "C" {
 /*************************************/
 
 /*************************************/
+/********* Define statements *********/
+/*************************************/
+
+#define C_SERVER_SOCKET_API __attribute__((visibility("default")))
+
+/*************************************/
+
+/*************************************/
 /******** Function prototypes ********/
 /*************************************/
 
@@ -27,7 +35,7 @@ extern "C" {
 /// @param key_path Path to server private key.
 /// @param CustomSocketStateInteract Custom function to interact with client once connection is established.
 /// @return 0 always, exit sending failure signal if SIGINT signal handler could not be properly set.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* pkey_path, int (*CustomSocketStateInteract)(int client_socket, bool secure, SSL** ssl));
+C_SERVER_SOCKET_API int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* pkey_path, int (*CustomSocketStateInteract)(int client_socket, bool secure, SSL** ssl));
 
 /*************************************/
 
