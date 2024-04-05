@@ -27,9 +27,6 @@ static pid_t*       server_instances    = NULL;
 static SSL_CTX*     ctx                 = NULL;
 static SSL*         ssl                 = NULL;
 
-static char*        expanded_path_cert  = NULL;
-static char*        expanded_path_pkey  = NULL;
-
 /// @brief Pointer to a function which is meant to interact with the client.
 /// @param client_socket Client socket.
 /// @param secure True if TLS security is wanted, false otherwise.
@@ -50,18 +47,6 @@ static void SocketFreeResources(void)
     {
         LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
         free(server_instances);
-    }
-
-    if(expanded_path_cert != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PATH_CERT);
-        free(expanded_path_cert);
-    }
-
-    if(expanded_path_pkey != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PATH_PKEY);
-        free(expanded_path_pkey);
     }
 
     if(ssl != NULL)
@@ -304,9 +289,6 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
     int client_socket;
     server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
 
-    ServerSocketSSLExpandPath(&expanded_path_cert, &cert_path);
-    ServerSocketSSLExpandPath(&expanded_path_pkey, &pkey_path);
-
     if(CustomSocketStateInteract != NULL)
         SocketStateInteract = CustomSocketStateInteract;
 
@@ -336,7 +318,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
                     continue;
                 }
                 
-                if(SocketStateSetupSSL(&ctx, &ssl, expanded_path_cert, expanded_path_pkey) < 0)
+                if(SocketStateSetupSSL(&ctx, &ssl, cert_path, pkey_path) < 0)
                     socket_fsm = CLOSE;
                 else
                     socket_fsm = OPTIONS;
