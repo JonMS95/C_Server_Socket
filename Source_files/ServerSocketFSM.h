@@ -17,8 +17,6 @@
 #define SERVER_SOCKET_SET_SIGINT_ERR            "Error while trying to set up SIGINT handler."
 #define SERVER_SOCKET_MSG_SIGINT_RECEIVED       "Received Ctrl+C (SIGINT). Cleaning up and exiting."
 #define SERVER_SOCKET_MSG_CLEANING_UP_PID       "Cleaning up server instances array in server with PID <%d>."
-#define SERVER_SOCKET_MSG_CLEANING_UP_PATH_CERT "Cleaning up server certificate path string."
-#define SERVER_SOCKET_MSG_CLEANING_UP_PATH_PKEY "Cleaning up server private key path string."
 #define SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX   "Cleaning up server SSL context."
 #define SERVER_SOCKET_MSG_CLEANING_UP_SSL       "Cleaning up server SSL data."
 #define SERVER_SOCKET_MSG_CREATION_NOK          "Socket file descriptor creation failed."
