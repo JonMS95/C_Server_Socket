@@ -2,8 +2,8 @@
 <config>
     <Project_data
         version_major="1"
-        version_minor="2"
-        version_mode="RELEASE"
+        version_minor="3"
+        version_mode="DEBUG"
         URL="https://github.com/JonMS95/C_Server_Socket"
         type="library"
         language="C"
@@ -59,15 +59,15 @@
             />
             <C_Arg_Parse
                 version_major="1"
-                version_minor="3"
-                version_mode="RELEASE"
+                version_minor="4"
+                version_mode="DEBUG"
                 local_path="~/Desktop/scripts/C/C_Arg_Parse"
                 URL="https://github.com/JonMS95/C_Arg_Parse"
             />
             <C_Server_Socket
                 version_major="1"
-                version_minor="2"
-                version_mode="RELEASE"
+                version_minor="3"
+                version_mode="DEBUG"
                 local_path="~/Desktop/scripts/C/C_Server_Socket"
                 URL="https://github.com/JonMS95/C_Server_Socket"
             />
