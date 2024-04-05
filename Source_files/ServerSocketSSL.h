@@ -30,7 +30,6 @@
 
 int ServerSocketSSLSetup(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path);
 int ServerSocketSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl);
-void ServerSocketSSLExpandPath(char** dest_expanded_path, char** src_short_path);
 
 /*************************************/
 
