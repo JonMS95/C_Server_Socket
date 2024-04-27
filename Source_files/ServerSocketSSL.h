@@ -6,6 +6,7 @@
 /************************************/
 
 #include <openssl/ssl.h>    // OpenSSL.
+#include <stdbool.h>
 
 /************************************/
 
@@ -28,8 +29,12 @@
 /******** Function prototypes ********/
 /*************************************/
 
-int ServerSocketSSLSetup(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path);
-int ServerSocketSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl);
+SSL** ServerSocketGetPointerToSSLData(void);
+SSL_CTX** ServerSocketGetPointerToSSLContext(void);
+bool ServerSocketIsSecure(void);
+
+int ServerSocketSSLSetup(char* cert_path, char* priv_key_path);
+int ServerSocketSSLHandshake(int client_socket, bool non_blocking);
 
 /*************************************/
 
