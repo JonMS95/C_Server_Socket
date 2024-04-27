@@ -2,13 +2,14 @@
 /******** Include statements ********/
 /************************************/
 
-#include <sys/socket.h>     // socket, bind, listen accept functions.
-#include <arpa/inet.h>      // sockaddr_in, inet_addr
-#include <unistd.h>         // Write socket.
-#include <string.h>         // strcpy
-#include <netinet/tcp.h>    // SO_KEEPALIVE
+#include <sys/socket.h>         // socket, bind, listen accept functions.
+#include <arpa/inet.h>          // sockaddr_in, inet_addr
+#include <unistd.h>             // Write socket.
+#include <string.h>             // strcpy
+#include <netinet/tcp.h>        // SO_KEEPALIVE
+#include <fcntl.h>              // Set socket flags.
 #include "ServerSocketUse.h"
-#include "SeverityLog_api.h" // Severity Log.
+#include "SeverityLog_api.h"
 
 /*************************************/
 
@@ -34,8 +35,9 @@ int CreateSocketDescriptor(int domain, int type, int protocol)
 /// @param keep_idle defines heartbeat frequency when it's receiving ACK packets from the other side (server is continuously sending empty packets).
 /// @param keep_counter dictates how many unanswered heartbeats will indicate a broken connection.
 /// @param keep_interval defines heartbeat frequency when there is no answer from the client's side.
+/// @param keep_alive Sends probes every specified time amount in order to keep the connection alive.
 /// @return < 0 if any error happened.
-int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_idle, int keep_counter, int keep_interval)
+int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_idle, int keep_counter, int keep_interval, int keep_alive)
 {
     int socket_options;
 
@@ -44,6 +46,7 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
 
     return socket_options;
 }
@@ -89,10 +92,67 @@ int SocketListen(int socket_desc, int connections_number)
     return socket_listen;
 }
 
+/// @brief Sets non-blocking flag to the target socket.
+/// @param socket_fd Target socket.
+/// @return < 0 if any error happened, 0 otherwise.
+int SocketSetNonBlocking(int socket_fd)
+{
+    // First, try to get socket's current flag set.
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    if(flags < 0)
+    {
+        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        return flags;
+    }
+
+    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
+
+    // Then, set the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
+    flags |= O_NONBLOCK;
+    if(fcntl(socket_fd, F_SETFL, flags) < 0)
+    {
+        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        return flags;
+    }
+
+    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
+
+    return 0;
+}
+
+/// @brief Unsets non-blocking flag to the target socket.
+/// @param socket_fd Target socket.
+/// @return < 0 if any error happened, 0 otherwise.
+int SocketUnsetNonBlocking(int socket_fd)
+{
+    // First, try to get socket's current flag set.
+    int flags = fcntl(socket_fd, F_GETFL, 0);
+    if(flags < 0)
+    {
+        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        return flags;
+    }
+
+    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
+
+    // Then, unset the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
+    flags &= ~O_NONBLOCK;
+    if(fcntl(socket_fd, F_SETFL, flags) < 0)
+    {
+        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        return flags;
+    }
+
+    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
+
+    return 0;
+}
+
 /// @brief Accept an incoming connection.
 /// @param socket_desc Previously created socket descriptor.
+/// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
 /// @return New socket instance, based on the socket descriptor, oriented to the client.
-int SocketAccept(int socket_desc)
+int SocketAccept(int socket_desc, bool non_blocking)
 {
     // Wait for incoming connections.
     struct sockaddr_in client;
@@ -102,10 +162,14 @@ int SocketAccept(int socket_desc)
 
     int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+    int set_non_blocking = 0;
+    if(non_blocking)
+        set_non_blocking = SocketSetNonBlocking(client_socket);
+    
+    if(set_non_blocking < 0)
+        return set_non_blocking;
 
-    int keep_alive = 5;
-    int socket_options = setsockopt(client_socket, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
+    LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     return client_socket;
 }
