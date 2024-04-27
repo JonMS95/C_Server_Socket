@@ -19,7 +19,7 @@
 /// @param secure True if TLS security is wanted, false otherwise.
 /// @param ssl SSL data.
 /// @return < 0 if any error happened, 0 otherwise.
-int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl);
+int SocketDefaultInteractFn(int client_socket);
 
 /*************************************/
 
