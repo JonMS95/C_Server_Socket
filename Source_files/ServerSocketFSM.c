@@ -22,17 +22,14 @@
 /***********************************/
 
 static volatile int ctrlCPressed        = 0;
-
 static pid_t*       server_instances    = NULL;
-static SSL_CTX*     ctx                 = NULL;
-static SSL*         ssl                 = NULL;
 
 /// @brief Pointer to a function which is meant to interact with the client.
 /// @param client_socket Client socket.
 /// @param secure True if TLS security is wanted, false otherwise.
 /// @param ssl SSL data.
-/// @return < 0 if any error happened, 0 otherwise.
-static int (*SocketStateInteract)(int client_socket, bool secure, SSL** ssl)  = &SocketDefaultInteractFn;
+/// @return < 0 if any error happened, > 0 if want to interact again, 0 otherwise.
+static int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn;
 
 /***********************************/
 
@@ -49,16 +46,16 @@ static void SocketFreeResources(void)
         free(server_instances);
     }
 
-    if(ssl != NULL)
+    if(*(ServerSocketGetPointerToSSLData()) != NULL)
     {
         LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
-        SSL_free(ssl);
+        SSL_free(*(ServerSocketGetPointerToSSLData()));
     }
 
-    if(ctx != NULL)
+    if(*(ServerSocketGetPointerToSSLContext()) != NULL)
     {
         LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
-        SSL_CTX_free(ctx);
+        SSL_CTX_free(*(ServerSocketGetPointerToSSLContext()));
     }
 
     ERR_free_strings();
@@ -97,30 +94,12 @@ static int SocketStateCreate(void)
     return socket_desc;
 }
 
-/// @brief Setup SSL data and context.
-/// @param ctx SSL context
-/// @param ssl SSL data
-/// @param cert_path Path to certificate.
-/// @param priv_key_path Path to private key.
-/// @return 0 if succeeded, < 0 otherwise.
-static int SocketStateSetupSSL(SSL_CTX** ctx, SSL** ssl, char* cert_path, char* priv_key_path)
-{
-    int server_socket_SSL_setup = ServerSocketSSLSetup(ctx, ssl, cert_path, priv_key_path);
-
-    if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
-        LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
-    else
-        LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
-
-    return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
-}
-
 /// @brief Set socket options.
 /// @param socket_desc Socket file descriptor.
 /// @return < 0 if it failed to set options.
 static int SocketStateOptions(int socket_desc)
 {
-    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50);
+    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50, 5);
 
     if(socket_options < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
@@ -128,6 +107,22 @@ static int SocketStateOptions(int socket_desc)
         LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
 
     return socket_options;
+}
+
+/// @brief Setup SSL data and context.
+/// @param cert_path Path to certificate.
+/// @param priv_key_path Path to private key.
+/// @return 0 if succeeded, < 0 otherwise.
+static int SocketStateSetupSSL(char* cert_path, char* priv_key_path)
+{
+    int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
+
+    if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
+        LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
+    else
+        LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
+
+    return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
 }
 
 /// @brief Bind socket to an IP address and port.
@@ -166,10 +161,11 @@ static int SocketStateListen(int socket_desc, int max_conn_num)
 
 /// @brief Accept an incoming connection.
 /// @param socket_desc Socket file descriptor.
+/// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
 /// @return < 0 if it failed to accept the connection.
-static int SocketStateAccept(int socket_desc)
+static int SocketStateAccept(int socket_desc, bool non_blocking)
 {
-    int client_socket = SocketAccept(socket_desc);
+    int client_socket = SocketAccept(socket_desc, non_blocking);
 
     if(client_socket < 0)
         LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
@@ -243,12 +239,11 @@ static int SocketStateRefuse(int client_socket)
 
 /// @brief Perform SSL handshake if needed.
 /// @param client_socket Client socket instance.
-/// @param ctx SSL context.
-/// @param ssl SSL data.
+/// @param bool non_blocking Tells whether or not is the socket non-blocking.
 /// @return 0 if handhsake was successfully performed, < 0 otherwise.
-static int SocketStateSSLHandshake(int client_socket, SSL_CTX** ctx, SSL** ssl)
+static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
 {
-    int ssl_handshake = ServerSocketSSLHandshake(client_socket, ctx, ssl);
+    int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
 
     if(ssl_handshake != SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS)
         LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
@@ -266,12 +261,14 @@ static int SocketStateClose(int client_socket)
     int close = CloseSocket(client_socket);
     
     if(close < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK);
+        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket);
     else
-        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK);
+        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket);
 
     return close;    
 }
+
+#include <fcntl.h>
 
 /// @brief Runs server socket.
 /// @param server_port Port server is meant to be listening to.
@@ -282,7 +279,7 @@ static int SocketStateClose(int client_socket)
 /// @param key_path Path to server private key.
 /// @param CustomSocketStateInteract Custom function to interact with client once connection is established.
 /// @return 0 always, exit sending failure signal if SIGINT signal handler could not be properly set.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool secure, char* cert_path, char* pkey_path, int (*CustomSocketStateInteract)(int client_socket, bool secure, SSL** ssl))
+int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool non_blocking, bool secure, char* cert_path, char* pkey_path, int (*CustomSocketStateInteract)(int client_socket))
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
@@ -302,37 +299,41 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
     {
         switch (socket_fsm)
         {
+            // Create socket file descriptor
             case CREATE_FD:
             {
                 socket_desc = SocketStateCreate();
                 if(socket_desc >= 0)
+                    socket_fsm = OPTIONS;
+            }
+            break;
+
+            // Set general socket FD options (keepalive, heartbeat, ...)
+            case OPTIONS:
+            {
+                if(SocketStateOptions(socket_desc) >= 0)
                     socket_fsm = SETUP_SSL;
             }
             break;
 
+            // Setup SSL / TLS
             case SETUP_SSL:
             {
                 if(!secure)
                 {
-                    socket_fsm = OPTIONS;
+                    socket_fsm = BIND;
                     continue;
                 }
                 
-                if(SocketStateSetupSSL(&ctx, &ssl, cert_path, pkey_path) < 0)
+                if(SocketStateSetupSSL(cert_path, pkey_path) < 0)
                     socket_fsm = CLOSE;
                 else
-                    socket_fsm = OPTIONS;
-
-            }
-            break;
-
-            case OPTIONS:
-            {
-                if(SocketStateOptions(socket_desc) >= 0)
                     socket_fsm = BIND;
+
             }
             break;
 
+            // Bind socket descriptor to a specified port
             case BIND:
             {
                 if(SocketStateBind(socket_desc, server_port) >= 0)
@@ -340,20 +341,33 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             }
             break;
 
+            // Mark the socket as listener (as it has to be for a server)
             case LISTEN:
             {
+                if(concurrent)
+                    max_conn_num = 1;
+
                 if(SocketStateListen(socket_desc, max_conn_num) >= 0)
                     socket_fsm = ACCEPT;
             }
             break;
 
+            // Wait until an incoming connection shows up
             case ACCEPT:
             {
-                client_socket = SocketStateAccept(socket_desc);
+                client_socket = SocketStateAccept(socket_desc, non_blocking);
+
+                int flags = fcntl(client_socket, F_GETFL, 0);
+                if(flags < 0)
+                {
+                    LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+                    return flags;
+                }
+                LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
 
                 if(client_socket >= 0)
                 {
-                    if(!concurrent)
+                    if(!(concurrent && max_conn_num > 1))
                     {
                         socket_fsm = SSL_HANDSHAKE;
                         continue;
@@ -364,6 +378,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             }
             break;
 
+            // Clone the current process if necessary
             case MANAGE_CONCURRENCY:
             {
                 int manage_concurrency = SocketStateManageConcurrency(client_socket, server_instances, max_conn_num);
@@ -394,6 +409,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             }
             break;
 
+            // Refuse the incomming connection if it is not allowed
             case REFUSE:
             {
                 SocketStateRefuse(client_socket);
@@ -402,6 +418,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
             }
             break;
 
+            // Perform SSL / TLS handshake to make the connection secure
             case SSL_HANDSHAKE:
             {
                 if(!secure)
@@ -410,28 +427,39 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool sec
                     continue;
                 }
 
-                if(SocketStateSSLHandshake(client_socket, &ctx, &ssl) >= 0)
+                if(SocketStateSSLHandshake(client_socket, non_blocking) >= 0)
                     socket_fsm = INTERACT;
                 else
                     socket_fsm = ACCEPT;
             }
             break;
 
+            // Interact with client
             case INTERACT:
             {
-                if(SocketStateInteract(client_socket, secure, &ssl) <= 0)
-                {
-                    if(concurrent)
-                        socket_fsm = CLOSE;
-                    else
-                        socket_fsm = ACCEPT;
-                }
+                if(SocketStateInteract(client_socket) > 0)
+                    socket_fsm = INTERACT;
+                else
+                    socket_fsm = CLOSE_CLIENT;
+            }
+            break;
+
+            // Close client socket instance if required
+            case CLOSE_CLIENT:
+            {
+                SocketStateClose(client_socket);
+
+                // If server allows multiple instances, then this point may only be reached by a child process, so socket must be closed.
+                if(concurrent && max_conn_num > 1)
+                    socket_fsm = CLOSE;
+                else
+                    socket_fsm = ACCEPT;
+
             }
             break;
 
             case CLOSE:
             {
-                SocketStateClose(client_socket);
                 SocketFreeResources();
 
                 return 0;
