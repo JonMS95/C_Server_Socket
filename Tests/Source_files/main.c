@@ -37,6 +37,13 @@
 #define SIMULTANEOUS_CONNS_DETAIL           "Enable concurrency."
 #define SIMULTANEOUS_CONNS_DEFAULT_VALUE    false
 
+/********* Non-blocking socket ********/
+
+#define NON_BLOCKING_CHAR                   'n'
+#define NON_BLOCKING_LONG                   "NonBlocking"
+#define NON_BLOCKING_DETAIL                 "Non blocking socket."
+#define NON_BLOCKING_DEFAULT_VALUE          true
+
 /********* Secure connection *********/
 
 #define SECURE_CONN_CHAR            's'
@@ -73,15 +80,10 @@ int main(int argc, char** argv)
     int server_port         ;
     int max_clients_num     ;
     bool concurrency_enabled;
-    bool secure_connection;
+    bool non_blocking       ;
+    bool secure_connection  ;
     char* path_cert = calloc(100, 1);
     char* path_pkey = calloc(100, 1);
-
-    SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
-                                SIMULTANEOUS_CONNS_LONG             ,
-                                SIMULTANEOUS_CONNS_DETAIL           ,
-                                SIMULTANEOUS_CONNS_DEFAULT_VALUE    ,
-                                &concurrency_enabled                );
 
     SetOptionDefinitionInt( PORT_OPT_CHAR       ,
                             PORT_OPT_LONG       ,
@@ -98,6 +100,18 @@ int main(int argc, char** argv)
                             CLIENTS_MAX_VALUE       ,
                             CLIENTS_DEFAULT_VALUE   ,
                             &max_clients_num        );
+
+    SetOptionDefinitionBool(    SIMULTANEOUS_CONNS_CHAR             ,
+                                SIMULTANEOUS_CONNS_LONG             ,
+                                SIMULTANEOUS_CONNS_DETAIL           ,
+                                SIMULTANEOUS_CONNS_DEFAULT_VALUE    ,
+                                &concurrency_enabled                );
+
+    SetOptionDefinitionBool(    NON_BLOCKING_CHAR                   ,
+                                NON_BLOCKING_LONG                   ,
+                                NON_BLOCKING_DETAIL                 ,
+                                NON_BLOCKING_DEFAULT_VALUE          ,
+                                &non_blocking                       );
 
     SetOptionDefinitionBool(    SECURE_CONN_CHAR            ,
                                 SECURE_CONN_LONG            ,
@@ -126,7 +140,7 @@ int main(int argc, char** argv)
 
     LOG_INF("Arguments successfully parsed!");
 
-    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, secure_connection, path_cert, path_pkey, NULL);
+    ServerSocketRun(server_port, max_clients_num, concurrency_enabled, non_blocking, secure_connection, path_cert, path_pkey, NULL);
 
     return 0;
 }
