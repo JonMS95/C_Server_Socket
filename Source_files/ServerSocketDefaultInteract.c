@@ -3,11 +3,10 @@
 /************************************/
 
 #include <netinet/in.h>     // INET_ADDRSTRLEN.
-#include <fcntl.h>          // Set socket flags.
 #include <openssl/ssl.h>
-#include <arpa/inet.h>      // sockaddr_in, inet_addr
 #include <unistd.h>
 #include "SeverityLog_api.h"
+#include "ServerSocket_api.h"
 
 /*************************************/
 
@@ -18,48 +17,24 @@
 #define SERVER_SOCKET_LEN_RX_BUFFER             256     // RX buffer size.
 #define SERVER_SOCKET_LEN_TX_BUFFER             256     // TX buffer size.
 
-#define SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS  "Error while getting socket flags."
-#define SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS  "Error while setting O_NONBLOCK flag."
-
 #define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>"
 #define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>"
 #define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
 
 /************************************/
 
-/// @brief Get client's IP address.
-/// @param client_socket Client socket.
-/// @param client_IPv4 Target string to which client IPv4 address is meant to be copied.
-static void ServerSocketGetClientIPv4(int client_socket, char* client_IPv4)
+static void ServerSocketShowReadData(char* rx_buffer)
 {
-    struct sockaddr_in client;
-    socklen_t client_len = sizeof(client);
-    getpeername(client_socket, (struct sockaddr*)&client, &client_len);
-    inet_ntop(AF_INET, &client.sin_addr, client_IPv4, INET_ADDRSTRLEN);
-}
+    if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\n')
+        rx_buffer[strlen(rx_buffer) - 1] = 0;
 
-/// @brief Set the socket as non-blocking.
-/// @param client_socket Client socket.
-/// @return < 0 is getting / settings flags failed 0, otherwise.
-static int ServerSocketSetNonBlocking(int client_socket)
-{
-    // Fisrt, try to get socket's current flag set.
-    int flags = fcntl(client_socket, F_GETFL, 0);
-    if(flags < 0)
+    if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\r')
+        rx_buffer[strlen(rx_buffer) - 1] = 0;
+
+    if(strlen(rx_buffer) > 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
-        return flags;
+        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
     }
-
-    // Then, set the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
-    flags |= O_NONBLOCK;
-    if(fcntl(client_socket, F_SETFL, flags) < 0)
-    {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
-        return flags;
-    }
-
-    return 0;
 }
 
 /// @brief Reads from client, then sends a response.
@@ -67,24 +42,11 @@ static int ServerSocketSetNonBlocking(int client_socket)
 /// @param secure True if TLS security is wanted, false otherwise.
 /// @param ssl SSL data.
 /// @return < 0 if any error happened, 0 otherwise.
-int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl)
+int SocketDefaultInteractFn(int client_socket)
 {
-    //////////////////////////////////////////////////////////////////////
-    // START CUSTOM INTERACT FUNCTION
-    //////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////
-    // GET THE CLIENT IP ADDR FIRST.
-    ////////////////////////////////
-
     // Get client IP first, then Log it's IP address.
     char client_IP_addr[INET_ADDRSTRLEN] = {};
     ServerSocketGetClientIPv4(client_socket, client_IP_addr);
-
-    // Set socket as non-blocking.
-    int set_non_blocking = ServerSocketSetNonBlocking(client_socket);
-    if(set_non_blocking < 0)
-        return set_non_blocking;
 
     char rx_buffer[SERVER_SOCKET_LEN_RX_BUFFER];
     memset(rx_buffer, 0, sizeof(rx_buffer));
@@ -94,10 +56,7 @@ int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl)
 
     while( (read_from_socket >= 0) || (something_read == false) )
     {
-        if(!secure)
-            read_from_socket = read(client_socket, rx_buffer, sizeof(rx_buffer));
-        else
-            read_from_socket = SSL_read(*ssl, rx_buffer, sizeof(rx_buffer));
+        read_from_socket = SERVER_SOCKET_READ(client_socket, rx_buffer);
 
         // Check if the client is still connected, or if no data has been received.
         if(read_from_socket == 0)
@@ -120,16 +79,7 @@ int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl)
         // Remove possible ending new line and carriage return characters first.
         something_read = true;
         
-        if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\n')
-            rx_buffer[strlen(rx_buffer) - 1] = 0;
-
-        if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\r')
-            rx_buffer[strlen(rx_buffer) - 1] = 0;
-
-        if(strlen(rx_buffer) > 0)
-        {
-            LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
-        }
+        ServerSocketShowReadData(rx_buffer);
 
         // Clean the buffer after reading.
         memset(rx_buffer, 0, read_from_socket);
@@ -143,14 +93,7 @@ int SocketDefaultInteractFn(int client_socket, bool secure, SSL** ssl)
     memset(tx_buffer, 0, sizeof(tx_buffer));
     sprintf(tx_buffer, SERVER_SOCKET_MSG_GREETING, client_IP_addr);
     
-    if(!secure)
-        write(client_socket, tx_buffer, strlen(tx_buffer));
-    else
-        SSL_write(*ssl, tx_buffer, strlen(tx_buffer));
-
-    //////////////////////////////////////////////////////////////////////
-    // END CUSTOM INTERACT FUNCTION
-    //////////////////////////////////////////////////////////////////////
+    SERVER_SOCKET_WRITE(client_socket, tx_buffer);
 
     return 0;
 }
