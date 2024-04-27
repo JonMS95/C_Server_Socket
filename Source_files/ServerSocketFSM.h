@@ -37,8 +37,8 @@
 #define SERVER_SOCKET_MSG_REFUSE                "Connection refused by the server. Closing socket in %d seconds."
 #define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK     "SSL handshake failed."
 #define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK      "SSL handshake succeeded."
-#define SERVER_SOCKET_MSG_CLOSE_NOK             "An error happened while closing the socket."
-#define SERVER_SOCKET_MSG_CLOSE_OK              "Socket successfully closed."
+#define SERVER_SOCKET_MSG_CLOSE_NOK             "An error happened while closing socket <%d>."
+#define SERVER_SOCKET_MSG_CLOSE_OK              "Socket <%d> successfully closed."
 
 #define SERVER_SOCKET_CONC_ERR_CANNOT_FORK       -2
 #define SERVER_SOCKET_CONC_ERR_REFUSE_CONN       -1
@@ -67,6 +67,7 @@ typedef enum
     REFUSE              ,
     SSL_HANDSHAKE       ,
     INTERACT            ,
+    CLOSE_CLIENT        ,
     CLOSE               ,
 
 } SOCKET_FSM;
@@ -83,7 +84,7 @@ static int SocketStateCreate(void);
 static int SocketStateOptions(int socket_desc);
 static int SocketStateBind(int socket_desc, int server_port);
 static int SocketStateListen(int socket_desc, int max_conn_num);
-static int SocketStateAccept(int socket_desc);
+static int SocketStateAccept(int socket_desc, bool non_blocking);
 static int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num);
 static int SocketStateRefuse(int client_socket);
 static int SocketStateClose(int client_socket);
