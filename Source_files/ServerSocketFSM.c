@@ -268,8 +268,6 @@ static int SocketStateClose(int client_socket)
     return close;    
 }
 
-#include <fcntl.h>
-
 /// @brief Runs server socket.
 /// @param server_port Port server is meant to be listening to.
 /// @param max_conn_num Maximum number of connections.
@@ -344,7 +342,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool non
             // Mark the socket as listener (as it has to be for a server)
             case LISTEN:
             {
-                if(concurrent)
+                if(!concurrent)
                     max_conn_num = 1;
 
                 if(SocketStateListen(socket_desc, max_conn_num) >= 0)
