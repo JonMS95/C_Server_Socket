@@ -50,10 +50,10 @@ C_SERVER_SOCKET_API int ServerSocketRead(int client_socket, char* rx_buffer, uns
 /// @param client_socket Client socket.
 /// @param tx_buffer Required TX buffer in which data to write is found.
 /// @return > 0 equaling the amount of bytes written, 0 if client got disconnected, < 0 if any error happened.
-C_SERVER_SOCKET_API int ServerSocketWrite(int client_socket, char* tx_buffer, unsigned long tx_buffer_size);
+C_SERVER_SOCKET_API int ServerSocketWrite(int client_socket, const char* tx_buffer, unsigned long tx_buffer_size);
 
 #define SERVER_SOCKET_WRITE(client_socket, tx_buffer)                \
-        ServerSocketWrite(client_socket, tx_buffer, strlen(tx_buffer))
+        ServerSocketWrite(client_socket, (const char*)tx_buffer, strlen(tx_buffer))
 
 /// @brief Runs server socket.
 /// @param server_port Port server is meant to be listening to.
