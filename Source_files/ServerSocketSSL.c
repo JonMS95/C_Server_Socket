@@ -66,16 +66,17 @@ int ServerSocketSSLSetup(char* cert_path, char* priv_key_path)
 
     // Load server certificate
     int ssl_load_cert = SSL_CTX_use_certificate_file(*(ServerSocketGetPointerToSSLContext()), cert_path, SSL_FILETYPE_PEM);
-    if (ssl_load_cert <= 0) {
+    if (ssl_load_cert <= 0)
+    {
         ERR_print_errors_fp(stderr);
         return ssl_load_cert;
     }
 
     // Load server private key
     int ssl_load_priv_key = SSL_CTX_use_PrivateKey_file(*(ServerSocketGetPointerToSSLContext()), priv_key_path, SSL_FILETYPE_PEM);
-    if (ssl_load_priv_key <= 0) {
+    if (ssl_load_priv_key <= 0)
+    {
         ERR_print_errors_fp(stderr);
-
         return ssl_load_priv_key;
     }
 
@@ -101,9 +102,7 @@ int ServerSocketSSLHandshake(int client_socket, bool non_blocking)
     int ssl_accept = SSL_accept(*(ServerSocketGetPointerToSSLData()));
 
     if(ssl_accept <= 0)
-    {
         ERR_print_errors_fp(stderr);
-    }
 
     // Check if socket is non-blocking. If that is the case, then set it as non-blocking again.
     int set_non_blocking = 0;
