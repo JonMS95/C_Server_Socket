@@ -357,14 +357,6 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool non
             {
                 client_socket = SocketStateAccept(socket_desc, non_blocking);
 
-                int flags = fcntl(client_socket, F_GETFL, 0);
-                if(flags < 0)
-                {
-                    LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
-                    return flags;
-                }
-                LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
-
                 if(client_socket >= 0)
                 {
                     if(!(concurrent && max_conn_num > 1))
