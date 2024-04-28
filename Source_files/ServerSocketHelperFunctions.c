@@ -45,7 +45,7 @@ int ServerSocketRead(int client_socket, char* rx_buffer, unsigned long rx_buffer
 /// @param tx_buffer TX buffer.
 /// @param tx_buffer_size TX buffer size.
 /// @return < 0 if any error happens, number of bytes sent otherwise.
-int ServerSocketWrite(int client_socket, char* tx_buffer, unsigned long tx_buffer_size)
+int ServerSocketWrite(int client_socket, const char* tx_buffer, unsigned long tx_buffer_size)
 {
     int write_to_socket;
 
