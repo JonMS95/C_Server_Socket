@@ -46,7 +46,26 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
+    
+    // // JMS TESTING
+    // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
+    // #include <sys/time.h>
+    // struct timeval set_timeout =
+    // {
+    //     .tv_sec     = 0,
+    //     .tv_usec    = 100000,
+    // };
+    // socklen_t set_timeout_len = sizeof(set_timeout);
+
+    // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_timeout, set_timeout_len);
+
+    // struct timeval get_timeout;
+    // socklen_t get_timeout_len = sizeof(get_timeout);
+
+    // if (getsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &get_timeout, &get_timeout_len) == -1) {
+    //     LOG_ERR("getsockopt");
+    // }
+    // LOG_ERR("get_timeout.tv_sec: %llu, get_timeout.tv_usec: %llu", get_timeout.tv_sec, get_timeout.tv_usec);
 
     return socket_options;
 }
@@ -105,8 +124,6 @@ int SocketSetNonBlocking(int socket_fd)
         return flags;
     }
 
-    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
-
     // Then, set the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
     flags |= O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
@@ -114,8 +131,6 @@ int SocketSetNonBlocking(int socket_fd)
         LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
-
-    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
 
     return 0;
 }
@@ -133,8 +148,6 @@ int SocketUnsetNonBlocking(int socket_fd)
         return flags;
     }
 
-    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
-
     // Then, unset the O_NONBLOCK flag (which, as the name suggests, makes the socket non-blocking).
     flags &= ~O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
@@ -142,8 +155,6 @@ int SocketUnsetNonBlocking(int socket_fd)
         LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
-
-    LOG_WNG("flags & O_NONBLOCK == O_NONBLOCK = %d, LINE = %d", ((flags & O_NONBLOCK) == O_NONBLOCK), __LINE__);
 
     return 0;
 }
