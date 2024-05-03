@@ -47,17 +47,17 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
     
-    // // JMS TESTING
+    // JMS TESTING
     // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
-    // #include <sys/time.h>
-    // struct timeval set_timeout =
-    // {
-    //     .tv_sec     = 0,
-    //     .tv_usec    = 100000,
-    // };
-    // socklen_t set_timeout_len = sizeof(set_timeout);
+    #include <sys/time.h>
+    struct timeval set_timeout =
+    {
+        .tv_sec     = 0,
+        .tv_usec    = 100000,
+    };
+    socklen_t set_timeout_len = sizeof(set_timeout);
 
-    // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_timeout, set_timeout_len);
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_timeout, set_timeout_len);
 
     // struct timeval get_timeout;
     // socklen_t get_timeout_len = sizeof(get_timeout);
@@ -180,7 +180,8 @@ int SocketAccept(int socket_desc, bool non_blocking)
     if(set_non_blocking < 0)
         return set_non_blocking;
 
-    LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+    if(client_socket > 0)
+        LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     return client_socket;
 }
