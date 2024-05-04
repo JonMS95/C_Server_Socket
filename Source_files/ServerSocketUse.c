@@ -8,6 +8,7 @@
 #include <string.h>             // strcpy
 #include <netinet/tcp.h>        // SO_KEEPALIVE
 #include <fcntl.h>              // Set socket flags.
+#include <sys/time.h>           // Set timeout
 #include "ServerSocketUse.h"
 #include "SeverityLog_api.h"
 
@@ -49,7 +50,8 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     
     // JMS TESTING
     // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
-    #include <sys/time.h>
+    
+    // JMS TESTING
     struct timeval set_timeout =
     {
         .tv_sec     = 0,
@@ -169,7 +171,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
     struct sockaddr_in client;
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
 
-    LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
+    // LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
 
     int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
