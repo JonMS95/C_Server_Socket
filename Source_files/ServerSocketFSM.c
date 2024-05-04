@@ -167,9 +167,12 @@ static int SocketStateAccept(int socket_desc, bool non_blocking)
 {
     int client_socket = SocketAccept(socket_desc, non_blocking);
 
-    if(client_socket < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
-    else
+    // if(client_socket < 0)
+    //     LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
+    // else
+    //     LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
+    
+    if(client_socket >= 0)
         LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     
     return client_socket;
