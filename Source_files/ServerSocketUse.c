@@ -47,11 +47,10 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
-    
-    // JMS TESTING
     // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
     
-    // JMS TESTING
+    // // JMS TESTING: HTTP Server, not meant to be used along with the simple TCP server implementation.
+    // // JMS TESTING: meant to be featured as new options, not only for the current function, but for ServerSocketRun and SocketStateOptions too.
     struct timeval set_timeout =
     {
         .tv_sec     = 0,
@@ -175,14 +174,17 @@ int SocketAccept(int socket_desc, bool non_blocking)
 
     int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
-    int set_non_blocking = 0;
-    if(non_blocking)
-        set_non_blocking = SocketSetNonBlocking(client_socket);
-    
-    if(set_non_blocking < 0)
-        return set_non_blocking;
+    if(client_socket >= 0)
+    {
+        int set_non_blocking = 0;
+        if(non_blocking)
+            set_non_blocking = SocketSetNonBlocking(client_socket);
+        
+        if(set_non_blocking < 0)
+            return set_non_blocking;
+    }
 
-    if(client_socket > 0)
+    if(client_socket >= 0)
         LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     return client_socket;
