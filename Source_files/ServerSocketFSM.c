@@ -275,6 +275,7 @@ static int SocketStateClose(int client_socket)
 /// @param server_port Port server is meant to be listening to.
 /// @param max_conn_num Maximum number of connections.
 /// @param concurrent Enable concurrent server instances.
+/// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
 /// @param secure Enable secure communication (TLS).
 /// @param cert_path Path to server ceritificate.
 /// @param key_path Path to server private key.
