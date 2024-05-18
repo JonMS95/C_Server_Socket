@@ -96,10 +96,13 @@ static int SocketStateCreate(void)
 
 /// @brief Set socket options.
 /// @param socket_desc Socket file descriptor.
+/// @param reuse_address Reuse address, does not hold the address after socket is closed.
+/// @param reuse_port Reuse port, does not hold the port after socket is closed.
+/// @param rx_timeout_usecs Receive timeout in microseconds.
 /// @return < 0 if it failed to set options.
-static int SocketStateOptions(int socket_desc)
+static int SocketStateOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs)
 {
-    int socket_options = SocketOptions(socket_desc, 1, 1, 50, 50, 50, 5);
+    int socket_options = SocketOptions(socket_desc, true, true, rx_timeout_usecs);
 
     if(socket_options < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
@@ -276,12 +279,25 @@ static int SocketStateClose(int client_socket)
 /// @param max_conn_num Maximum number of connections.
 /// @param concurrent Enable concurrent server instances.
 /// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
+/// @param reuse_address Reuse address, does not hold the address after socket is closed.
+/// @param reuse_port Reuse port, does not hold the port after socket is closed.
+/// @param rx_timeout_usecs Receive timeout in microseconds.
 /// @param secure Enable secure communication (TLS).
 /// @param cert_path Path to server ceritificate.
 /// @param key_path Path to server private key.
 /// @param CustomSocketStateInteract Custom function to interact with client once connection is established.
 /// @return 0 always, exit sending failure signal if SIGINT signal handler could not be properly set.
-int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool non_blocking, bool secure, char* cert_path, char* pkey_path, int (*CustomSocketStateInteract)(int client_socket))
+int ServerSocketRun(int server_port                                     ,
+                    int max_conn_num                                    ,
+                    bool concurrent                                     ,
+                    bool non_blocking                                   ,
+                    bool reuse_address                                  ,
+                    bool reuse_port                                     ,
+                    unsigned long rx_timeout_usecs                      ,
+                    bool secure                                         ,
+                    char* cert_path                                     ,
+                    char* pkey_path                                     ,
+                    int (*CustomSocketStateInteract)(int client_socket) )
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
@@ -313,7 +329,7 @@ int ServerSocketRun(int server_port, int max_conn_num, bool concurrent, bool non
             // Set general socket FD options (keepalive, heartbeat, ...)
             case OPTIONS:
             {
-                if(SocketStateOptions(socket_desc) >= 0)
+                if(SocketStateOptions(socket_desc, reuse_address, reuse_port, rx_timeout_usecs) >= 0)
                     socket_fsm = SETUP_SSL;
             }
             break;
