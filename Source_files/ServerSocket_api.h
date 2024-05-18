@@ -10,7 +10,6 @@ extern "C" {
 /*************************************/
 
 #include <stdbool.h>
-#include <openssl/ssl.h>
 
 #ifdef __cplusplus
 #include <cstring>
