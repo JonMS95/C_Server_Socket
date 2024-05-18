@@ -2,6 +2,7 @@
 /******** Include statements ********/
 /************************************/
 
+#include <stdlib.h>
 #include "ServerSocket_api.h"
 #include "GetOptions_api.h"
 #include "SeverityLog_api.h"
