@@ -31,19 +31,27 @@ int CreateSocketDescriptor(int domain, int type, int protocol)
 
 /// @brief Set socket options.
 /// @param socket_desc Previously created socket descriptor.
-/// @param reuse_address 1 if the address is meant to be forcefully used again, 0 otherwise.
-/// @param reuse_port 1 if the port is meant to be forcefully used again, 0 otherwise.
-/// @param keep_idle defines heartbeat frequency when it's receiving ACK packets from the other side (server is continuously sending empty packets).
-/// @param keep_counter dictates how many unanswered heartbeats will indicate a broken connection.
-/// @param keep_interval defines heartbeat frequency when there is no answer from the client's side.
-/// @param keep_alive Sends probes every specified time amount in order to keep the connection alive.
+/// @param reuse_address true if the address is meant to be forcefully used again, false otherwise.
+/// @param reuse_port true if the port is meant to be forcefully used again, false otherwise.
+// /// @param keep_idle defines heartbeat frequency when it's receiving ACK packets from the other side (server is continuously sending empty packets).
+// /// @param keep_counter dictates how many unanswered heartbeats will indicate a broken connection.
+// /// @param keep_interval defines heartbeat frequency when there is no answer from the client's side.
+// /// @param keep_alive Sends probes every specified time amount in order to keep the connection alive.
+/// @param reuse_address Reuse address, does not hold the address after socket is closed.
+/// @param reuse_port Reuse port, does not hold the port after socket is closed.
+/// @param rx_timeout_usecs Receive timeout in microseconds.
 /// @return < 0 if any error happened.
-int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_idle, int keep_counter, int keep_interval, int keep_alive)
+int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs)
 {
     int socket_options;
 
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address, sizeof(reuse_address    ));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port   , sizeof(reuse_port       ));
+    int reuse_address_int   = reuse_address == true ? 1 : 0;
+    int reuse_port_int      = reuse_port == true ? 1 : 0;
+
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address_int, sizeof(reuse_address    ));
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port_int   , sizeof(reuse_port       ));
+
+    // The ones below are not meant to be used by now. These options are related to keep-alive mechanism.
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPCNT  , &keep_counter , sizeof(keep_counter     ));
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
@@ -53,20 +61,12 @@ int SocketOptions(int socket_desc, int reuse_address, int reuse_port, int keep_i
     // // JMS TESTING: meant to be featured as new options, not only for the current function, but for ServerSocketRun and SocketStateOptions too.
     struct timeval set_timeout =
     {
-        .tv_sec     = 0,
-        .tv_usec    = 100000,
+        .tv_sec     = rx_timeout_usecs / SERVER_SOCKET_1_SEC_IN_USECS,
+        .tv_usec    = rx_timeout_usecs % SERVER_SOCKET_1_SEC_IN_USECS,
     };
     socklen_t set_timeout_len = sizeof(set_timeout);
 
     socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_timeout, set_timeout_len);
-
-    // struct timeval get_timeout;
-    // socklen_t get_timeout_len = sizeof(get_timeout);
-
-    // if (getsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &get_timeout, &get_timeout_len) == -1) {
-    //     LOG_ERR("getsockopt");
-    // }
-    // LOG_ERR("get_timeout.tv_sec: %llu, get_timeout.tv_usec: %llu", get_timeout.tv_sec, get_timeout.tv_usec);
 
     return socket_options;
 }
