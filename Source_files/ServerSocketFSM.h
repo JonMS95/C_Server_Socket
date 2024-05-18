@@ -81,7 +81,7 @@ typedef enum
 static void SocketFreeResources(void);
 static void SocketSIGINTHandler(int signum);
 static int SocketStateCreate(void);
-static int SocketStateOptions(int socket_desc);
+static int SocketStateOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs);
 static int SocketStateBind(int socket_desc, int server_port);
 static int SocketStateListen(int socket_desc, int max_conn_num);
 static int SocketStateAccept(int socket_desc, bool non_blocking);
