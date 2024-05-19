@@ -46,10 +46,10 @@ int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned
     int socket_options;
 
     int reuse_address_int   = reuse_address == true ? 1 : 0;
-    int reuse_port_int      = reuse_port == true ? 1 : 0;
+    int reuse_port_int      = reuse_port    == true ? 1 : 0;
 
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address_int, sizeof(reuse_address    ));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port_int   , sizeof(reuse_port       ));
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address_int, sizeof(reuse_address_int));
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port_int   , sizeof(reuse_port_int   ));
 
     // The ones below are not meant to be used by now. These options are related to keep-alive mechanism.
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
