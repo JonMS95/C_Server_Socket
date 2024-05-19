@@ -75,8 +75,8 @@ C_SERVER_SOCKET_API int ServerSocketRun(int             server_port             
                                         bool            reuse_port                                      ,
                                         unsigned long   rx_timeout_usecs                                ,
                                         bool            secure                                          ,
-                                        char*           cert_path                                       ,
-                                        char*           pkey_path                                       ,
+                                        const char*     cert_path                                       ,
+                                        const char*     pkey_path                                       ,
                                         int             (*CustomSocketStateInteract)(int client_socket) );
 
 /*************************************/
