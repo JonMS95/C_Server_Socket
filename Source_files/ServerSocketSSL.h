@@ -33,7 +33,7 @@ SSL** ServerSocketGetPointerToSSLData(void);
 SSL_CTX** ServerSocketGetPointerToSSLContext(void);
 bool ServerSocketIsSecure(void);
 
-int ServerSocketSSLSetup(char* cert_path, char* priv_key_path);
+int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path);
 int ServerSocketSSLHandshake(int client_socket, bool non_blocking);
 
 /*************************************/

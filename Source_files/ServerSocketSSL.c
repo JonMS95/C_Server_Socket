@@ -47,7 +47,7 @@ SSL_CTX** ServerSocketGetPointerToSSLContext(void)
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 1 if succeeded, < 1 if any error ocurred.
-int ServerSocketSSLSetup(char* cert_path, char* priv_key_path)
+int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path)
 {
     LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_CERT, cert_path);
     LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY, priv_key_path);

@@ -116,7 +116,7 @@ static int SocketStateOptions(int socket_desc, bool reuse_address, bool reuse_po
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 0 if succeeded, < 0 otherwise.
-static int SocketStateSetupSSL(char* cert_path, char* priv_key_path)
+static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
 
@@ -295,8 +295,8 @@ int ServerSocketRun(int server_port                                     ,
                     bool reuse_port                                     ,
                     unsigned long rx_timeout_usecs                      ,
                     bool secure                                         ,
-                    char* cert_path                                     ,
-                    char* pkey_path                                     ,
+                    const char* cert_path                               ,
+                    const char* pkey_path                               ,
                     int (*CustomSocketStateInteract)(int client_socket) )
 {
     SOCKET_FSM socket_fsm = CREATE_FD;
