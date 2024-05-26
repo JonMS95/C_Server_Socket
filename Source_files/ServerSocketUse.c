@@ -41,7 +41,7 @@ int CreateSocketDescriptor(int domain, int type, int protocol)
 /// @param reuse_port Reuse port, does not hold the port after socket is closed.
 /// @param rx_timeout_usecs Receive timeout in microseconds.
 /// @return < 0 if any error happened.
-int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs)
+int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_secs, unsigned long rx_timeout_usecs)
 {
     int socket_options;
 
@@ -61,8 +61,8 @@ int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned
     // // JMS TESTING: meant to be featured as new options, not only for the current function, but for ServerSocketRun and SocketStateOptions too.
     struct timeval set_timeout =
     {
-        .tv_sec     = rx_timeout_usecs / SERVER_SOCKET_1_SEC_IN_USECS,
-        .tv_usec    = rx_timeout_usecs % SERVER_SOCKET_1_SEC_IN_USECS,
+        .tv_sec     = rx_timeout_secs ,
+        .tv_usec    = rx_timeout_usecs,
     };
     socklen_t set_timeout_len = sizeof(set_timeout);
 
