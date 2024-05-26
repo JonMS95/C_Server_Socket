@@ -44,6 +44,7 @@ static void SocketFreeResources(void)
     {
         LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
         free(server_instances);
+        server_instances = NULL;
     }
 
     if(*(ServerSocketGetPointerToSSLData()) != NULL)
@@ -98,11 +99,12 @@ static int SocketStateCreate(void)
 /// @param socket_desc Socket file descriptor.
 /// @param reuse_address Reuse address, does not hold the address after socket is closed.
 /// @param reuse_port Reuse port, does not hold the port after socket is closed.
+/// @param rx_timeout_usecs Receive timeout in seconds.
 /// @param rx_timeout_usecs Receive timeout in microseconds.
 /// @return < 0 if it failed to set options.
-static int SocketStateOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs)
+static int SocketStateOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_secs, unsigned long rx_timeout_usecs)
 {
-    int socket_options = SocketOptions(socket_desc, true, true, rx_timeout_usecs);
+    int socket_options = SocketOptions(socket_desc, true, true, rx_timeout_secs, rx_timeout_usecs);
 
     if(socket_options < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
@@ -281,7 +283,8 @@ static int SocketStateClose(int client_socket)
 /// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
 /// @param reuse_address Reuse address, does not hold the address after socket is closed.
 /// @param reuse_port Reuse port, does not hold the port after socket is closed.
-/// @param rx_timeout_usecs Receive timeout in microseconds.
+/// @param rx_timeout_s Receive timeout in seconds.
+/// @param rx_timeout_us Receive timeout in microseconds.
 /// @param secure Enable secure communication (TLS).
 /// @param cert_path Path to server ceritificate.
 /// @param key_path Path to server private key.
@@ -293,7 +296,8 @@ int ServerSocketRun(int server_port                                     ,
                     bool non_blocking                                   ,
                     bool reuse_address                                  ,
                     bool reuse_port                                     ,
-                    unsigned long rx_timeout_usecs                      ,
+                    unsigned long rx_timeout_s                          ,
+                    unsigned long rx_timeout_us                         ,
                     bool secure                                         ,
                     const char* cert_path                               ,
                     const char* pkey_path                               ,
@@ -329,7 +333,7 @@ int ServerSocketRun(int server_port                                     ,
             // Set general socket FD options (keepalive, heartbeat, ...)
             case OPTIONS:
             {
-                if(SocketStateOptions(socket_desc, reuse_address, reuse_port, rx_timeout_usecs) >= 0)
+                if(SocketStateOptions(socket_desc, reuse_address, reuse_port, rx_timeout_s, rx_timeout_us) >= 0)
                     socket_fsm = SETUP_SSL;
             }
             break;
