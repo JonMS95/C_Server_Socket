@@ -57,13 +57,21 @@
 #define REUSE_PORT_DETAIL                   "Reuse port."
 #define REUSE_PORT_DEFAULT_VALUE            false
 
-/********** Receive timeout **********/
-#define RX_TIMEOUT_CHAR                     't'
-#define RX_TIMEOUT_OPT_LONG                 "RXTimeout"
-#define RX_TIMEOUT_OPT_DETAIL               "Receive Timeout. Useless if non-blocking."
-#define RX_TIMEOUT_MIN_VALUE                0
-#define RX_TIMEOUT_MAX_VALUE                5000000             // 5 seconds
-#define RX_TIMEOUT_DEFAULT_VALUE            1000000     
+/********** Receive timeout (s) ******/
+#define RX_TIMEOUT_SECS_CHAR                't'
+#define RX_TIMEOUT_SECS_OPT_LONG            "RXTimeoutSecs"
+#define RX_TIMEOUT_SECS_OPT_DETAIL          "Receive Timeout in seconds."
+#define RX_TIMEOUT_SECS_MIN_VALUE           0
+#define RX_TIMEOUT_SECS_MAX_VALUE           3600    // 1 hour
+#define RX_TIMEOUT_SECS_DEFAULT_VALUE       600     // 10 minutes
+
+/********** Receive timeout (us) *****/
+#define RX_TIMEOUT_USECS_CHAR               'u'
+#define RX_TIMEOUT_USECS_OPT_LONG           "RXTimeoutUsecs"
+#define RX_TIMEOUT_USECS_OPT_DETAIL         "Receive Timeout in microseconds."
+#define RX_TIMEOUT_USECS_MIN_VALUE          0
+#define RX_TIMEOUT_USECS_MAX_VALUE          1000000 // 1 second
+#define RX_TIMEOUT_USECS_DEFAULT_VALUE      1       // 1 microsecond
 
 /********* Secure connection *********/
 
@@ -98,14 +106,15 @@ int main(int argc, char** argv)
     SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
     SetSeverityLogPrintTimeStatus(true);
 
-    int server_port         ;
-    int max_clients_num     ;
-    bool concurrency_enabled;
-    bool non_blocking       ;
-    bool reuse_address      ;
-    bool reuse_port         ;
-    unsigned long rx_timeout;
-    bool secure_connection  ;
+    int server_port             ;
+    int max_clients_num         ;
+    bool concurrency_enabled    ;
+    bool non_blocking           ;
+    bool reuse_address          ;
+    bool reuse_port             ;
+    int rx_timeout_s            ;
+    int rx_timeout_us           ;
+    bool secure_connection      ;
     char* path_cert = calloc(100, 1);
     char* path_pkey = calloc(100, 1);
 
@@ -149,13 +158,21 @@ int main(int argc, char** argv)
                                 REUSE_PORT_DEFAULT_VALUE            ,
                                 &reuse_port                         );
 
-    SetOptionDefinitionInt(     RX_TIMEOUT_CHAR                     ,
-                                RX_TIMEOUT_OPT_LONG                 ,
-                                RX_TIMEOUT_OPT_DETAIL               ,
-                                RX_TIMEOUT_MIN_VALUE                ,
-                                RX_TIMEOUT_MAX_VALUE                ,
-                                RX_TIMEOUT_DEFAULT_VALUE            ,
-                                &rx_timeout                         );
+    SetOptionDefinitionInt(     RX_TIMEOUT_SECS_CHAR                ,
+                                RX_TIMEOUT_SECS_OPT_LONG            ,
+                                RX_TIMEOUT_SECS_OPT_DETAIL          ,
+                                RX_TIMEOUT_SECS_MIN_VALUE           ,
+                                RX_TIMEOUT_SECS_MAX_VALUE           ,
+                                RX_TIMEOUT_SECS_DEFAULT_VALUE       ,
+                                &rx_timeout_s                       );
+
+    SetOptionDefinitionInt(     RX_TIMEOUT_USECS_CHAR               ,
+                                RX_TIMEOUT_USECS_OPT_LONG           ,
+                                RX_TIMEOUT_USECS_OPT_DETAIL         ,
+                                RX_TIMEOUT_USECS_MIN_VALUE          ,
+                                RX_TIMEOUT_USECS_MAX_VALUE          ,
+                                RX_TIMEOUT_USECS_DEFAULT_VALUE      ,
+                                &rx_timeout_us                      );
 
     SetOptionDefinitionBool(    SECURE_CONN_CHAR                    ,
                                 SECURE_CONN_LONG                    ,
@@ -190,7 +207,8 @@ int main(int argc, char** argv)
                     non_blocking        ,
                     reuse_address       ,
                     reuse_port          ,
-                    rx_timeout          ,
+                    rx_timeout_s        ,
+                    rx_timeout_us       ,
                     secure_connection   ,
                     path_cert           ,
                     path_pkey           ,
