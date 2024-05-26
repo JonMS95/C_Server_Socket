@@ -29,7 +29,7 @@
 /*************************************/
 
 int CreateSocketDescriptor(int domain, int type, int protocol);
-int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_usecs);
+int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_secs, unsigned long rx_timeout_usecs);
 struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allowed_IPs, uint16_t listen_port);
 int BindSocket(int socket_desc, struct sockaddr_in server);
 int SocketListen(int socket_desc, int connections_number);
