@@ -61,7 +61,8 @@ C_SERVER_SOCKET_API int ServerSocketWrite(int client_socket, const char* tx_buff
 /// @param non_blocking Tells whether or not is the socket meant to be non-blocking.
 /// @param reuse_address Reuse address, does not hold the address after socket is closed.
 /// @param reuse_port Reuse port, does not hold the port after socket is closed.
-/// @param rx_timeout_usecs Receive timeout in microseconds.
+/// @param rx_timeout_s Receive timeout in seconds.
+/// @param rx_timeout_us Receive timeout in microseconds.
 /// @param secure Enable secure communication (TLS).
 /// @param cert_path Path to server ceritificate.
 /// @param key_path Path to server private key.
@@ -73,7 +74,8 @@ C_SERVER_SOCKET_API int ServerSocketRun(int             server_port             
                                         bool            non_blocking                                    ,
                                         bool            reuse_address                                   ,
                                         bool            reuse_port                                      ,
-                                        unsigned long   rx_timeout_usecs                                ,
+                                        unsigned long   rx_timeout_s                                    ,
+                                        unsigned long   rx_timeout_us                                   ,
                                         bool            secure                                          ,
                                         const char*     cert_path                                       ,
                                         const char*     pkey_path                                       ,
