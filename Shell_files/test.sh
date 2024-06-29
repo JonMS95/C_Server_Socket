@@ -16,4 +16,4 @@ echo
 echo "*******************************"
 echo "Testing 'main' executable file."
 echo "*******************************"
-./Tests/Executable_files/main -r ${DEFAULT_USER_PORT} -m ${DEFAULT_CONN_NUM} -t 1000 -u 0 -pnabs -c ~/Desktop/scripts/certificate_test/certificate.crt -k ~/Desktop/scripts/certificate_test/private.key
+./Tests/Executable_files/main -r ${DEFAULT_USER_PORT} -m ${DEFAULT_CONN_NUM} -t 1000 -u 0 -y 1000 -i 0 -pnabs -c ~/Desktop/scripts/certificate_test/certificate.crt -k ~/Desktop/scripts/certificate_test/private.key
