@@ -39,9 +39,18 @@ int CreateSocketDescriptor(int domain, int type, int protocol)
 // /// @param keep_alive Sends probes every specified time amount in order to keep the connection alive.
 /// @param reuse_address Reuse address, does not hold the address after socket is closed.
 /// @param reuse_port Reuse port, does not hold the port after socket is closed.
+/// @param rx_timeout_s Receive timeout in seconds.
 /// @param rx_timeout_usecs Receive timeout in microseconds.
+/// @param tx_timeout_s Send timeout in seconds.
+/// @param tx_timeout_us Send timeout in microseconds.
 /// @return < 0 if any error happened.
-int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned long rx_timeout_secs, unsigned long rx_timeout_usecs)
+int SocketOptions(  int             socket_desc     ,
+                    bool            reuse_address   ,
+                    bool            reuse_port      ,
+                    unsigned long   rx_timeout_secs ,
+                    unsigned long   rx_timeout_usecs,
+                    unsigned long   tx_timeout_secs ,
+                    unsigned long   tx_timeout_usecs)
 {
     int socket_options;
 
@@ -57,16 +66,22 @@ int SocketOptions(int socket_desc, bool reuse_address, bool reuse_port, unsigned
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPINTVL, &keep_interval, sizeof(keep_interval    ));
     // socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_KEEPALIVE , &keep_alive, sizeof(keep_alive));
     
-    // // JMS TESTING: HTTP Server, not meant to be used along with the simple TCP server implementation.
-    // // JMS TESTING: meant to be featured as new options, not only for the current function, but for ServerSocketRun and SocketStateOptions too.
-    struct timeval set_timeout =
+    struct timeval set_rx_timeout =
     {
         .tv_sec     = rx_timeout_secs ,
         .tv_usec    = rx_timeout_usecs,
     };
-    socklen_t set_timeout_len = sizeof(set_timeout);
+    socklen_t set_rx_timeout_len = sizeof(set_rx_timeout);
 
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_timeout, set_timeout_len);
+    struct timeval set_tx_timeout =
+    {
+        .tv_sec     = tx_timeout_secs ,
+        .tv_usec    = tx_timeout_usecs,
+    };
+    socklen_t set_tx_timeout_len = sizeof(set_tx_timeout);
+
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_rx_timeout, set_rx_timeout_len);
+    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_SNDTIMEO, &set_tx_timeout, set_tx_timeout_len);
 
     return socket_options;
 }
