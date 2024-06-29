@@ -112,7 +112,7 @@ static int SocketStateOptions(  int             socket_desc     ,
                                 unsigned long   tx_timeout_secs ,
                                 unsigned long   tx_timeout_usecs)
 {
-    int socket_options = SocketOptions(socket_desc, true, true, rx_timeout_secs, rx_timeout_usecs, tx_timeout_secs, tx_timeout_usecs);
+    int socket_options = SocketOptions(socket_desc, reuse_address, reuse_port, rx_timeout_secs, rx_timeout_usecs, tx_timeout_secs, tx_timeout_usecs);
 
     if(socket_options < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
