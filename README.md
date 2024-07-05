@@ -3,14 +3,14 @@
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
 ## Table of contents
-* [Introduction](#introduction)
-* [Features](#features)
-* [Prerequisites](#prerequisites)
-* [Installation instructions](#installation-instructions)
-* [Usage](#usage)
-* [To do](#to-do)
-* [Contributing](#contributing)
-* [License](#license)
+* [**Introduction**](#introduction)
+* [**Features**](#features)
+* [**Prerequisites**](#prerequisites)
+* [**Installation instructions**](#installation-instructions)
+* [**Usage**](#usage)
+* [**To do**](#to-do)
+* [**Contributing**](#contributing)
+* [**License**](#license)
 
 ## Introduction
 This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
@@ -144,8 +144,15 @@ provide maximum optionality so each developer can customize its usage as much as
 In exchange, the function returns:
 * **0** always if everything went OK, or exit sending **failure signal** if SIGINT signal handler could not be properly set
 
+For reference, a proper API usage example has been provided on the [test source file](https://github.com/JonMS95/C_Server_Socket/blob/main/Tests/Source_files/main.c).
+As this one uses [**C_Arg_Parse library**](https://github.com/JonMS95/C_Arg_Parse), input parameters can be provided by using command-line interface.
+An example of CLI usage is provided in the [**Shell_files/test.sh**](https://github.com/JonMS95/C_Server_Socket/blob/main/Shell_files/test.sh) file.
+
 ## To do
+- [ ] Add UDP support
+- [ ] Use threads instead of parallel processes (more handleable)
 
 ## Contributing
+No contributions to the main branch are allowed by now. Anyone willing to modify the project in any way should fork it first.
 
 ## License
