@@ -9,8 +9,6 @@ The aim of this project is to build and learn about internet sockets, so it has 
 * [**Installation instructions**](#installation-instructions)
 * [**Usage**](#usage)
 * [**To do**](#to-do)
-* [**Contributing**](#contributing)
-* [**License**](#license)
 
 ## Introduction 📑
 This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
