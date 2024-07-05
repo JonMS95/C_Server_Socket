@@ -3,12 +3,12 @@
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
 ## Table of contents
-* [**Introduction**](#introduction)
-* [**Features**](#features)
-* [**Prerequisites**](#prerequisites)
-* [**Installation instructions**](#installation-instructions)
-* [**Usage**](#usage)
-* [**To do**](#to-do)
+* [**Introduction**](#introduction-📑)
+* [**Features**](#features-🌟)
+* [**Prerequisites**](#prerequisites-🧱)
+* [**Installation instructions**](#installation-instructions-📓)
+* [**Usage**](#usage-🖱️)
+* [**To do**](#to-do-☑️)
 
 ## Introduction 📑
 This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
