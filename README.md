@@ -17,12 +17,14 @@ This library was started as a way for me to have a more practical approach to ho
 However, as I found out the vast amount of practical applications it may have in real life, I started regarding it as a way more amusing and enriching activity for my professional career.
 
 Building this project has involved a deep understanding of:
-* Parallel-running processes
+* C/C++ programming
+* Bash scripting
 * TCP/IP protocol stack
-* Dependencies
+* Dependency management
+* Parallel-running processes
 * Tests
 * Linux OS operation
-  
+
 and the list goes on and on.
 Despite existing some aspects that need to be improved, it's a project I feel quite proud of. More of those (such as UDP support) will be coming soon.
 By now, it has been designed for it to be run on Linux distros (such as Ubuntu). The resulting library is a *.so* file alongside a C language header (*.h*) file.
@@ -49,7 +51,12 @@ In the following list, the minimum versions required (if any) by the library are
 
 Except for Make, Bash and OpenSSL, the latest version of each of the remaining dependencies will be installed automatically if they have not been found beforehand. 
 
-On top of the ones listed above, there are some dependencies that are required for both the library and the test executable to be 
+On top of the ones listed above, there are some *JMS* dependencies (libraries that were also made by myself) that are required for both the library and the test executable to be built,
+(although these are managed by the library itself, so no need to download them manually):
+* [C_Common_shell_files](https://github.com/JonMS95/C_Common_shell_files)
+* [C_Severity_Log](https://github.com/JonMS95/C_Severity_Log)
+* [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)
+* [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)
 
 ## Installation instructions
 In order to install it, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
@@ -77,11 +84,12 @@ The result of the line above will be a new API directory (which will match the u
 - **/path/to/repos/C_Server_Socket/API**
   - **vM_m**
     - **Dynamic_libraries**
-      - **libServerSocket.so.M.m**
+      - **_libServerSocket.so.M.m_**
     - **Header_files**
-      - **ServerSocket_api.h**
+      - **_ServerSocket_api.h_**
 
-Where _M_ and _m_ stand for the major and minor version numbers.
+Where **_M_** and **_m_** stand for the major and minor version numbers.
+**_ServerSocket_api.h_** could also be found in **_/path/to/repos/C_Server_Socket/Source_files/ServerSocket_api.h_** although it may differ depending on the version.
 
 For the test executable file to be compiled and executed, use:
 
@@ -91,12 +99,50 @@ make test
 
 Again, the one below is the path to the generated executable file:
 - **/path/to/repos/C_Server_Socket/Tests**
+  - **Executable_files**
+      - **_main_**
   - Source_files
   - Dependency_files
-  - **Executable_files**
-      - **main**
 
 ## Usage
+The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](https://github.com/JonMS95/C_Server_Socket/blob/main/Source_files/ServerSocket_api.h).
+
+```c
+C_SERVER_SOCKET_API int ServerSocketRun(int             server_port                                     ,
+                                        int             max_conn_num                                    ,
+                                        bool            concurrent                                      ,
+                                        bool            non_blocking                                    ,
+                                        bool            reuse_address                                   ,
+                                        bool            reuse_port                                      ,
+                                        unsigned long   rx_timeout_s                                    ,
+                                        unsigned long   rx_timeout_us                                   ,
+                                        unsigned long   tx_timeout_s                                    ,
+                                        unsigned long   tx_timeout_us                                   ,
+                                        bool            secure                                          ,
+                                        const char*     cert_path                                       ,
+                                        const char*     pkey_path                                       ,
+                                        int             (*CustomSocketStateInteract)(int client_socket) );
+```
+
+The amount of input parameters can be a bit astonishing, but please keep in mind it has been designed this way to
+provide maximum optionality so each developer can customize its usage as much as possible. Here is a list of the meaning of each input parameters:
+* **server_port**: specifies the port the server is meant to listen to
+* **max_conn_num**: maximum number of connections /clients
+* **concurrent**: specifies whether or not could those connections be parallel
+* **non_blocking**: tells whether or not is the socket non-blocking (not recommended)
+* **reuse_address**: reuse address, does not hold the address after the socket is closed (strongly recommended)
+* **reuse_port**: reuse port, does not hold the port after the socket is closed (strongly recommended)
+* **rx_timeout_s**: receive timeout in seconds.
+* **rx_timeout_us**: receive timeout in microseconds.
+* **tx_timeout_s**: send timeout in seconds.
+* **tx_timeout_us**: send timeout in microseconds.
+* **secure**: enable secure communication (TLS).
+* **cert_path**: path to server certificate.
+* **key_path**: path to server private key.
+* **CustomSocketStateInteract**: custom function to interact with the client once a connection has been established.
+
+In exchange, the function returns:
+* **0** always if everything went OK, or exit sending **failure signal** if SIGINT signal handler could not be properly set
 
 ## To do
 
