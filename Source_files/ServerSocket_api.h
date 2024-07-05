@@ -66,7 +66,7 @@ C_SERVER_SOCKET_API int ServerSocketWrite(int client_socket, const char* tx_buff
 /// @param tx_timeout_s Send timeout in seconds.
 /// @param tx_timeout_us Send timeout in microseconds.
 /// @param secure Enable secure communication (TLS).
-/// @param cert_path Path to server ceritificate.
+/// @param cert_path Path to server certificate.
 /// @param key_path Path to server private key.
 /// @param CustomSocketStateInteract Custom function to interact with client once connection is established.
 /// @return 0 always, exit sending failure signal if SIGINT signal handler could not be properly set.
