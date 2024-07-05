@@ -39,7 +39,7 @@ When it comes to security, TLS can be set, as well as the paths to the private k
 In order to get some knowledge about how to use the library alongside its options, go to [Usage](#usage).
 
 ## Prerequisites
-By now, the application has only been tested in POSIX compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
+By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
 In the following list, the minimum versions required (if any) by the library are listed.
 
 * [gcc](https://gcc.gnu.org/) 11.4 or above
@@ -125,7 +125,7 @@ C_SERVER_SOCKET_API int ServerSocketRun(int             server_port             
 ```
 
 The amount of input parameters can be a bit astonishing, but please keep in mind it has been designed this way to
-provide maximum optionality so each developer can customize its usage as much as possible. Here is a list of the meaning of each input parameters:
+provide maximum optionality so each developer can customize its usage as much as possible. Here is a list of the meaning of each input parameter:
 * **server_port**: specifies the port the server is meant to listen to
 * **max_conn_num**: maximum number of connections /clients
 * **concurrent**: specifies whether or not could those connections be parallel
@@ -137,8 +137,8 @@ provide maximum optionality so each developer can customize its usage as much as
 * **tx_timeout_s**: send timeout in seconds.
 * **tx_timeout_us**: send timeout in microseconds.
 * **secure**: enable secure communication (TLS).
-* **cert_path**: path to server certificate.
-* **key_path**: path to server private key.
+* **cert_path**: path to the server certificate.
+* **key_path**: path to the server private key.
 * **CustomSocketStateInteract**: custom function to interact with the client once a connection has been established.
 
 In exchange, the function returns:
