@@ -2,7 +2,7 @@
 ### A server socket written in C language
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
-## Table of contents
+## Table of contents 🗂️
 * [**Introduction**](#introduction)
 * [**Features**](#features)
 * [**Prerequisites**](#prerequisites)
