@@ -1,12 +1,7 @@
 # C_Server_Socket 🔌
 ### A server socket written in C language
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
--📑
--🌟
--🧱
--📓
--🖱️
--☑️
+
 ## Table of contents
 * [**Introduction**](#introduction)
 * [**Features**](#features)
@@ -15,7 +10,7 @@ The aim of this project is to build and learn about internet sockets, so it has 
 * [**Usage**](#usage)
 * [**To do**](#to-do)
 
-## Introduction
+## Introduction <a id="introduction"></a> 📑
 This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
 However, as I found out the vast amount of practical applications it may have in real life, I started regarding it as a way more amusing and enriching activity for my professional career.
 
@@ -32,7 +27,7 @@ and the list goes on and on.
 Despite existing some aspects that need to be improved, it's a project I feel quite proud of. More of those (such as UDP support) will be coming soon.
 By now, it has been designed for it to be run on Linux distros (such as Ubuntu). The resulting library is a *.so* file alongside a C language header (*.h*) file.
 
-## Features
+## Features <a id="features"></a> 🌟
 The resulting library comes with many options that can be applied to it, such as setting timeouts, or adding a custom interaction function,
 it's to say, an arbitrary function to describe how the socket should interact once the client has connected to it.
 
@@ -41,7 +36,7 @@ When it comes to security, TLS can be set, as well as the paths to the private k
 
 In order to get some knowledge about how to use the library alongside its options, go to [Usage](#usage).
 
-## Prerequisites
+## Prerequisites <a id="prerequisites"></a> 🧱
 By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
 In the following list, the minimum versions required (if any) by the library are listed.
 
@@ -61,7 +56,7 @@ On top of the ones listed above, there are some *JMS* dependencies (libraries th
 * [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)
 * [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)
 
-## Installation instructions
+## Installation instructions <a id="installation-instructions"></a> 📓
 In order to install it, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
 
 ```bash
@@ -107,7 +102,7 @@ Again, the one below is the path to the generated executable file:
   - Source_files
   - Dependency_files
 
-## Usage
+## Usage <a id="usage"></a> 🖱️
 The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](https://github.com/JonMS95/C_Server_Socket/blob/main/Source_files/ServerSocket_api.h).
 
 ```c
@@ -151,7 +146,7 @@ For reference, a proper API usage example has been provided on the [test source 
 As this one uses [**C_Arg_Parse library**](https://github.com/JonMS95/C_Arg_Parse), input parameters can be provided by using command-line interface.
 An example of CLI usage is provided in the [**Shell_files/test.sh**](https://github.com/JonMS95/C_Server_Socket/blob/main/Shell_files/test.sh) file.
 
-## To do
+## To do <a id="to-do"></a> ☑️
 - [ ] Add UDP support
 - [ ] Use threads instead of parallel processes (more handleable)
 - [ ] Add a contributing guide file.
