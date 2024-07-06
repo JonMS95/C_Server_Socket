@@ -161,7 +161,7 @@ Again, the one below is the path to the generated executable file:
 
 
 ## Usage <a id="usage"></a> 🖱️
-The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](https://github.com/JonMS95/C_Server_Socket/blob/main/Source_files/ServerSocket_api.h).
+The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](Source_files/ServerSocket_api.h).
 
 ```c
 C_SERVER_SOCKET_API int ServerSocketRun(int             server_port                                     ,
@@ -200,9 +200,9 @@ provide maximum optionality so each developer can customize its usage as much as
 In exchange, the function returns:
 * **0** if everything went OK, or exit sending **failure signal** if SIGINT signal handler could not be properly set
 
-For reference, a proper API usage example has been provided on the [test source file](https://github.com/JonMS95/C_Server_Socket/blob/main/Tests/Source_files/main.c).
+For reference, a proper API usage example has been provided on the [test source file](Tests/Source_files/main.c).
 As this one uses [**C_Arg_Parse library**](https://github.com/JonMS95/C_Arg_Parse), input parameters can be provided by using command-line interface.
-An example of CLI usage is provided in the [**Shell_files/test.sh**](https://github.com/JonMS95/C_Server_Socket/blob/main/Shell_files/test.sh) file.
+An example of CLI usage is provided in the [**Shell_files/test.sh**](Shell_files/test.sh) file.
 
 
 ## To do <a id="to-do"></a> ☑️
