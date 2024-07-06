@@ -1,16 +1,18 @@
-# C_Server_Socket 🔌
-### A server socket written in C language
+# C_Server_Socket: a server socket written in C language🔌
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
 
 ## Table of contents 🗂️
-* [**Introduction**](#introduction)
-* [**Features**](#features)
-* [**Prerequisites**](#prerequisites)
-* [**Installation instructions**](#installation-instructions)
-* [**Usage**](#usage)
-* [**To do**](#to-do)
-* [**Related documents**](#related-documents)
+* [**Introduction** 📑](#introduction)
+* [**Features** 🌟](#features)
+* [**Prerequisites** 🧱](#prerequisites)
+* [**Installation instructions** 📓](#installation-instructions)
+  * [**Download and compile** ⚙️](#download-and-compile)
+  * [**Create certificate and private key** 🔐](#create-certificate-and-private-key)
+  * [**Compile and run test** 🧪](#compile-and-run-test)
+* [**Usage** 🖱️](#usage)
+* [**To do** ☑️](#to-do)
+* [**Related documents** 🗄️](#related-documents)
 
 
 ## Introduction <a id="introduction"></a> 📑
@@ -28,7 +30,7 @@ Building this project has involved a deep understanding of:
 
 and the list goes on and on.
 Despite existing some aspects that need to be improved, it's a project I feel quite proud of. More of those (such as UDP support) will be coming soon.
-By now, it has been designed for it to be run on Linux distros (such as Ubuntu). The resulting library is a *.so* file alongside a C language header (*.h*) file.
+By now, it has been designed for it to be run on Linux distros (such as [Ubuntu](https://ubuntu.com/)). The resulting library is a *.so* file alongside a C language header (*.h*) file.
 
 
 ## Features <a id="features"></a> 🌟
@@ -75,15 +77,15 @@ On top of the ones listed above, there are some *JMS* dependencies (libraries th
 
 
 ## Installation instructions <a id="installation-instructions"></a> 📓
-### Download and compile
-In order to download the repo, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
+### Download and compile <a id="download-and-compile"></a> ⚙️
+1. In order to download the repo, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
 
 ```bash
 cd /path/to/repos
 git clone https://github.com/JonMS95/C_Server_Socket
 ```
 
-Then navigate to the directory in which the repo has been downloaded, and set execution permissions to every file just in case they have not been sent beforehand.
+2. Then navigate to the directory in which the repo has been downloaded, and set execution permissions to every file just in case they have not been sent beforehand.
 
 ```bash
 cd /path/to/repos/C_Server_Socket
@@ -91,7 +93,7 @@ cd /path/to/repos/C_Server_Socket
 find . -type f -exec chmod u+x {} +
 ```
 
-For the library to be built (i.e., clean, download dependencies and compile), just type the following on your command:
+3. For the library to be built (i.e., clean, download dependencies and compile), just type the following on your command:
 
 ```bash
 make
@@ -108,7 +110,42 @@ The result of the line above will be a new API directory (which will match the u
 Where **_M_** and **_m_** stand for the major and minor version numbers.
 **_ServerSocket_api.h_** could also be found in **_/path/to/repos/C_Server_Socket/Source_files/ServerSocket_api.h_** although it may differ depending on the version.
 
-### Compile and run test
+### Create certificate and private key <a id="create-certificate-and-private-key"></a> 🔐
+
+If executing the default test is not wanted but one without any security requirements, then locally modify [Shell_files/test.sh](Shell_files/test.sh) or run a custom
+command so that the executable does not use -s, -k and -c options, then go directly to the [test compilation stage](#compile-and-run-test). Otherwise, follow the
+steps described below.
+
+
+
+Steps to follow for the certificate and private key to be created using OpenSSL:
+
+1. Generate private key:
+
+   ```sh
+   openssl genpkey -algorithm RSA -out private.key
+   ```
+   
+2. (Optional) Set proper permissions to private key, so that only user is able to read or write it:
+
+   ```sh
+   chmod 600 private.key
+   ```
+
+3. Generate certificate (self-signed) based on previously created key:
+
+   ```sh
+   openssl req -new -key private.key -x509 -days 365 -out certificate.crt
+   ```
+
+4. (Optional) Read certificate content:
+  
+   ```sh
+   openssl x509 -in certificate.crt -text
+   ```
+
+
+### Compile and run test <a id="compile-and-run-test"></a> 🧪
 For the test executable file to be compiled and executed, use:
 
 ```bash
