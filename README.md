@@ -172,6 +172,6 @@ An example of CLI usage is provided in the [**Shell_files/test.sh**](https://git
 
 ## Related Documents <a id="related-documents"></a> 🗄️
 * [LICENSE](LICENSE)
-* [CONTRIBUTING.md](CONTRIBUTING.md)
-* [CHANGELOG.md](CHANGELOG.md)
+* [CONTRIBUTING.md](Docs/CONTRIBUTING.md)
+* [CHANGELOG.md](Docs/CHANGELOG.md)
 
