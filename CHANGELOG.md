@@ -5,7 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3 (Unreleased)]
+### Added
+- API header file now includes some more helpful functions to be applied once the socket has started running. The full API functions list goes like this:
+  - ServerSocketGetClientIPv4
+  - ServerSocketRead
+  - ServerSocketWrite
+  - ServerSocketRun
+
+### Changed
+- API function allows more input parameters, such as timeouts or setting the socket as non-blocking.
+
+### Fixed
+- Fixed some issues related to security that prevented the server from properly connecting to the client securely while security (TLS) was enabled.
 
 
 ## [1.2] - 2023-11-24
