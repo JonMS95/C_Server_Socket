@@ -40,12 +40,21 @@ In order to get some knowledge about how to use the library alongside its option
 By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
 In the following list, the minimum versions required (if any) by the library are listed.
 
-* [gcc](https://gcc.gnu.org/) 11.4 or above
-* [Bash](https://www.gnu.org/software/bash/) 4.4 or above
-* [Make](https://www.gnu.org/software/make/) 4.1 or above
-* [Git](https://git-scm.com/)
-* [Xmlstarlet](https://xmlstar.sourceforge.net/)
-* [OpenSSL](https://www.openssl.org/) 3.0.2 or above
+| Dependency                   | Minimum version |
+| :--------------------------- | :-------------: |
+| [gcc][gcc-link]              | 11.4            |
+| [Bash][bash-link]            | 4.4             |
+| [Make][make-link]            | 4.1             |
+| [Git][git-link]              | 2.34.1          |
+| [Xmlstarlet][xmlstarlet-link]| 1.6.1           |
+| [OpenSSL][openssl-link]      | 3.0.2           |
+
+[gcc-link]:        https://gcc.gnu.org/
+[bash-link]:       https://www.gnu.org/software/bash/
+[make-link]:       https://www.gnu.org/software/make/
+[git-link]:        https://git-scm.com/
+[xmlstarlet-link]: https://xmlstar.sourceforge.net/
+[openssl-link]:    https://www.openssl.org/
 
 Except for Make, Bash and OpenSSL, the latest version of each of the remaining dependencies will be installed automatically if they have not been found beforehand. 
 
