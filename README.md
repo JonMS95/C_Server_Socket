@@ -169,3 +169,4 @@ An example of CLI usage is provided in the [**Shell_files/test.sh**](https://git
 - [ ] Use threads instead of parallel processes (more handleable)
 - [ ] Add a contributing guide file.
 - [ ] Add a license file.
+
