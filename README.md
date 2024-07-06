@@ -2,6 +2,7 @@
 ### A server socket written in C language
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
+
 ## Table of contents 🗂️
 * [**Introduction**](#introduction)
 * [**Features**](#features)
@@ -9,6 +10,7 @@ The aim of this project is to build and learn about internet sockets, so it has 
 * [**Installation instructions**](#installation-instructions)
 * [**Usage**](#usage)
 * [**To do**](#to-do)
+
 
 ## Introduction <a id="introduction"></a> 📑
 This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
@@ -27,6 +29,7 @@ and the list goes on and on.
 Despite existing some aspects that need to be improved, it's a project I feel quite proud of. More of those (such as UDP support) will be coming soon.
 By now, it has been designed for it to be run on Linux distros (such as Ubuntu). The resulting library is a *.so* file alongside a C language header (*.h*) file.
 
+
 ## Features <a id="features"></a> 🌟
 The resulting library comes with many options that can be applied to it, such as setting timeouts, or adding a custom interaction function,
 it's to say, an arbitrary function to describe how the socket should interact once the client has connected to it.
@@ -35,6 +38,7 @@ When it comes to security, TLS can be set, as well as the paths to the private k
 (these files are not provided with the current project for privacy concerns).
 
 In order to get some knowledge about how to use the library alongside its options, go to [Usage](#usage).
+
 
 ## Prerequisites <a id="prerequisites"></a> 🧱
 By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
@@ -65,8 +69,10 @@ On top of the ones listed above, there are some *JMS* dependencies (libraries th
 * [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)
 * [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)
 
+
 ## Installation instructions <a id="installation-instructions"></a> 📓
-In order to install it, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
+### Download and compile
+In order to download the repo, just clone it from GitHub to your choice path by using the [link](https://github.com/JonMS95/C_Server_Socket) to the project.
 
 ```bash
 cd /path/to/repos
@@ -98,6 +104,7 @@ The result of the line above will be a new API directory (which will match the u
 Where **_M_** and **_m_** stand for the major and minor version numbers.
 **_ServerSocket_api.h_** could also be found in **_/path/to/repos/C_Server_Socket/Source_files/ServerSocket_api.h_** although it may differ depending on the version.
 
+### Compile and run test
 For the test executable file to be compiled and executed, use:
 
 ```bash
@@ -110,6 +117,7 @@ Again, the one below is the path to the generated executable file:
       - **_main_**
   - Source_files
   - Dependency_files
+
 
 ## Usage <a id="usage"></a> 🖱️
 The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](https://github.com/JonMS95/C_Server_Socket/blob/main/Source_files/ServerSocket_api.h).
@@ -154,6 +162,7 @@ In exchange, the function returns:
 For reference, a proper API usage example has been provided on the [test source file](https://github.com/JonMS95/C_Server_Socket/blob/main/Tests/Source_files/main.c).
 As this one uses [**C_Arg_Parse library**](https://github.com/JonMS95/C_Arg_Parse), input parameters can be provided by using command-line interface.
 An example of CLI usage is provided in the [**Shell_files/test.sh**](https://github.com/JonMS95/C_Server_Socket/blob/main/Shell_files/test.sh) file.
+
 
 ## To do <a id="to-do"></a> ☑️
 - [ ] Add UDP support
