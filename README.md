@@ -10,6 +10,7 @@ The aim of this project is to build and learn about internet sockets, so it has 
 * [**Installation instructions**](#installation-instructions)
 * [**Usage**](#usage)
 * [**To do**](#to-do)
+* [**Related documents**](#related-documents)
 
 
 ## Introduction <a id="introduction"></a> 📑
@@ -167,4 +168,10 @@ An example of CLI usage is provided in the [**Shell_files/test.sh**](https://git
 ## To do <a id="to-do"></a> ☑️
 - [ ] Add UDP support
 - [ ] Use threads instead of parallel processes (more handleable)
+
+
+## Related Documents <a id="related-documents"></a> 🗄️
+* [LICENSE](LICENSE)
+* [CONTRIBUTING.md](CONTRIBUTING.md)
+* [CHANGELOG.md](CHANGELOG.md)
 
