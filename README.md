@@ -167,6 +167,4 @@ An example of CLI usage is provided in the [**Shell_files/test.sh**](https://git
 ## To do <a id="to-do"></a> ☑️
 - [ ] Add UDP support
 - [ ] Use threads instead of parallel processes (more handleable)
-- [ ] Add a contributing guide file.
-- [ ] Add a license file.
 
