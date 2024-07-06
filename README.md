@@ -45,14 +45,14 @@ In order to get some knowledge about how to use the library alongside its option
 By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
 In the following list, the minimum versions required (if any) by the library are listed.
 
-| Dependency                   | Minimum version |
-| :--------------------------- | :-------------: |
-| [gcc][gcc-link]              | 11.4            |
-| [Bash][bash-link]            | 4.4             |
-| [Make][make-link]            | 4.1             |
-| [Git][git-link]              | 2.34.1          |
-| [Xmlstarlet][xmlstarlet-link]| 1.6.1           |
-| [OpenSSL][openssl-link]      | 3.0.2           |
+| Dependency                   | Purpose                                 | Minimum version |
+| :--------------------------- | :-------------------------------------- |:-------------: |
+| [gcc][gcc-link]              | Compile                                 |11.4            |
+| [Bash][bash-link]            | Execute Bash/Shell scripts              |4.4             |
+| [Make][make-link]            | Execute make file                       |4.1             |
+| [Git][git-link]              | Download GitHub dependencies            |2.34.1          |
+| [Xmlstarlet][xmlstarlet-link]| Parse [configuration file](config.xml)  |1.6.1           |
+| [OpenSSL][openssl-link]      | Allow TLS                               |3.0.2           |
 
 [gcc-link]:        https://gcc.gnu.org/
 [bash-link]:       https://www.gnu.org/software/bash/
@@ -64,11 +64,14 @@ In the following list, the minimum versions required (if any) by the library are
 Except for Make, Bash and OpenSSL, the latest version of each of the remaining dependencies will be installed automatically if they have not been found beforehand. 
 
 On top of the ones listed above, there are some *JMS* dependencies (libraries that were also made by myself) that are required for both the library and the test executable to be built,
-(although these are managed by the library itself, so no need to download them manually):
-* [C_Common_shell_files](https://github.com/JonMS95/C_Common_shell_files)
-* [C_Severity_Log](https://github.com/JonMS95/C_Severity_Log)
-* [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)
-* [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)
+(although these are managed by the library itself, so no need to download them manually). The required version for each of them is specified by the [config.xml](config.xml) file.
+
+| Dependency                                                              | Purpose                                  |
+| :---------------------------------------------------------------------- | :--------------------------------------- |
+| [C_Common_shell_files](https://github.com/JonMS95/C_Common_shell_files) | Process [configuration file](config.xml) |
+| [C_Severity_Log](https://github.com/JonMS95/C_Severity_Log)             | Show logs                                |
+| [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)                   | Parse command line arguments             |
+| [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)           | Test alongside server socket             |
 
 
 ## Installation instructions <a id="installation-instructions"></a> 📓
