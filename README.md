@@ -1,4 +1,4 @@
-# C_Server_Socket: a server socket written in C language🔌
+# C_Server_Socket: a server socket written in C 🔌
 The aim of this project is to build and learn about internet sockets, so it has been created for both educational and practical purposes.
 
 
@@ -16,7 +16,7 @@ The aim of this project is to build and learn about internet sockets, so it has 
 
 
 ## Introduction <a id="introduction"></a> 📑
-This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit scared in the beginning since I was overwhelmed by the many concepts I had to get a deeper understanding of.
+This library was started as a way for me to have a more practical approach to how TCP sockets work. I felt a bit overwhelmed at first by the large quantity of concepts I had to get a deeper understanding of.
 However, as I found out the vast amount of practical applications it may have in real life, I started regarding it as a way more amusing and enriching activity for my professional career.
 
 Building this project has involved a deep understanding of:
@@ -44,7 +44,7 @@ In order to get some knowledge about how to use the library alongside its option
 
 
 ## Prerequisites <a id="prerequisites"></a> 🧱
-By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies dependencies below may already come installed in the SO.
+By now, the application has only been tested in POSIX-compliant Linux distros. In these, many of the dependencies below may already come installed in the OS.
 In the following list, the minimum versions required (if any) by the library are listed.
 
 | Dependency                   | Purpose                                 | Minimum version |
@@ -93,7 +93,7 @@ cd /path/to/repos/C_Server_Socket
 find . -type f -exec chmod u+x {} +
 ```
 
-3. For the library to be built (i.e., clean, download dependencies and compile), just type the following on your command:
+3. For the library to be built (i.e., clean, download dependencies and compile), just type the following:
 
 ```bash
 make
