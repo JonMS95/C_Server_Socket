@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3] (Unreleased)
 ### Added
-- API header file now includes some more helpful functions to be applied once the socket has started running. The full API functions list goes like this:
+* API header file now includes some more helpful functions to be applied once the socket has started running. The full API functions list goes like this:
   - ServerSocketGetClientIPv4
   - ServerSocketRead
   - ServerSocketWrite
   - ServerSocketRun
+* Documentation (license, contribution rules, readme and changelog)
 
 ### Changed
 - API function allows more input parameters, such as timeouts or setting the socket as non-blocking.
