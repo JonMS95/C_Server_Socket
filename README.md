@@ -65,6 +65,8 @@ In the following list, the minimum versions required (if any) by the library are
 
 Except for Make, Bash and OpenSSL, the latest version of each of the remaining dependencies will be installed automatically if they have not been found beforehand. 
 
+When it comes to OpenSSL, its version may be earlier than the required one. In that case, it should be upgraded to 3.0.2 version at least. [**Shell_files/update_openssl.sh**](Shell_files/update_openssl.sh) should do the work (it will install 3.0.2 version, if any other version is wanted, just modify the script line in which the target openssl tgz file is downloaded).
+
 In any case, installing **_Xmlstarlet_** before executing any of the commands below is strongly recommended. Otherwise, it can lead to error since make file
 contains some calls to it at the top. If that happens, just repeat the process (Xmlstarlet would have been already installed).
 
