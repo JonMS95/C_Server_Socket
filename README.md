@@ -65,7 +65,7 @@ In the following list, the minimum versions required (if any) by the library are
 
 Except for Make, Bash and OpenSSL, the latest version of each of the remaining dependencies will be installed automatically if they have not been found beforehand. 
 
-When it comes to OpenSSL, its version may be earlier than the required one. In that case, it should be upgraded to 3.0.2 version at least. [**Shell_files/update_openssl.sh**](Shell_files/update_openssl.sh) should do the work (it will install 3.0.2 version, if any other version is wanted, just modify the script line in which the target openssl tgz file is downloaded). If developer files (such as libraries and header files) cannot be found, the following couple of lines should sort it out:
+When it comes to OpenSSL, its version may be earlier than the required one. In that case, it should be upgraded to 3.0.2 version at least. [**Shell_files/update_openssl.sh**](Shell_files/update_openssl.sh) should do the work (it will install 3.0.2 version, if any other version is wanted, just modify the script line in which the target openssl tgz file is downloaded). If developer files (such as libraries and header files) cannot be found, the following couple of lines should sort it out (even when a suitable version of OpenSSl has already been installed):
 
 ```bash
 sudo apt-get update
