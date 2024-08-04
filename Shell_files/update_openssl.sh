@@ -1,19 +1,16 @@
+#!/bin/bash
+
 # Update package lists
 sudo apt update
-
-# Uninstall OpenSSL and its development files
-sudo apt remove -y openssl libssl-dev
-sudo apt purge -y openssl libssl-dev
-sudo apt autoremove -y
 
 # Install prerequisites
 sudo apt install -y build-essential checkinstall zlib1g-dev
 
 # Download OpenSSL 3.0.2 source code
-wget https://www.openssl.org/source/openssl-3.0.2.tar.gz --no-check-certificate
+wget https://www.openssl.org/source/openssl-3.0.2.tar.gz
 
 # Extract the tarball
-tar -xf openssl-3.0.2.tar.gz
+tar -xzvf openssl-3.0.2.tar.gz
 cd openssl-3.0.2
 
 # Configure and compile OpenSSL
@@ -24,7 +21,7 @@ make
 sudo make install
 
 # Move libraries to /usr/lib/x86_64-linux-gnu
-sudo mv *.so* /usr/lib/x86_64-linux-gnu/
+sudo cp *.so* /usr/lib/x86_64-linux-gnu/
 
 # Move header files to /usr/include/openssl
 sudo rm -rf /usr/include/openssl
