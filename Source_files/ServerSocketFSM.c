@@ -24,13 +24,6 @@
 static volatile int ctrlCPressed        = 0;
 static pid_t*       server_instances    = NULL;
 
-/// @brief Pointer to a function which is meant to interact with the client.
-/// @param client_socket Client socket.
-/// @param secure True if TLS security is wanted, false otherwise.
-/// @param ssl SSL data.
-/// @return < 0 if any error happened, > 0 if want to interact again, 0 otherwise.
-static int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn;
-
 /***********************************/
 
 /*************************************/
@@ -40,12 +33,13 @@ static int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn
 /// @brief Frees previously heap allocated memory before exiting the program.
 static void SocketFreeResources(void)
 {
-    if(server_instances != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
-        free(server_instances);
-        server_instances = NULL;
-    }
+    SocketKillAllThreads();
+    // if(server_instances != NULL)
+    // {
+    //     LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
+    //     free(server_instances);
+    //     server_instances = NULL;
+    // }
 
     if(*(ServerSocketGetPointerToSSLData()) != NULL)
     {
@@ -73,6 +67,8 @@ static void SocketFreeResources(void)
 /// @param signum Signal number (SIGINT by default).
 static void SocketSIGINTHandler(int signum)
 {
+    // NEW VERSION (THREADS): apart from freeing all resources, all threads must be terminated.
+    // For such thing to be possible, threads should be cancellable (deferred).
     LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
     ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
 
@@ -318,10 +314,15 @@ int ServerSocketRun(int server_port                                     ,
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int client_socket;
-    server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
+    int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn;
 
     if(CustomSocketStateInteract != NULL)
         SocketStateInteract = CustomSocketStateInteract;
+
+    int setup_threads = SocketSetupThreads(max_conn_num, secure, non_blocking, SocketStateInteract);
+    
+    if(setup_threads < 0)
+        return setup_threads;
 
     if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
     {
@@ -391,49 +392,39 @@ int ServerSocketRun(int server_port                                     ,
             {
                 client_socket = SocketStateAccept(socket_desc, non_blocking);
 
+                // A new thread is created per received connection regardless of the fact that it may be the only connection available.
+                // Thus, it should always hit the MANAGE_THREADS on condition incoming connection attempt has been accepted by the server.
                 if(client_socket >= 0)
-                {
-                    if(!(concurrent && max_conn_num > 1))
-                    {
-                        socket_fsm = SSL_HANDSHAKE;
-                        continue;
-                    }
-
-                    socket_fsm = MANAGE_CONCURRENCY;
-                }
+                    socket_fsm = MANAGE_THREADS;
             }
             break;
 
             // Clone the current process if necessary
-            case MANAGE_CONCURRENCY:
+            // Should manage threads instead of processes:
+            case MANAGE_THREADS:
             {
-                int manage_concurrency = SocketStateManageConcurrency(client_socket, server_instances, max_conn_num);
+                // The function below tells whether it exists a spot for a new thread expected to execute all of the following operation states:
+                // SSL_HANDSHAKE, INTERACT, CLOSE_CLIENT
+                int manage_threads = SocketStateManageThreads(client_socket);
 
-                switch(manage_concurrency)
+                // If the number of threads exceeds the allowed quantity, then refuse the incoming connection.
+                if(manage_threads < 0)
                 {
-                    case SERVER_SOCKET_CONC_ERR_REFUSE_CONN:
-                    {
-                        socket_fsm = REFUSE;
-                    }
-                    break;
-
-                    case SERVER_SOCKET_CONC_SUCCESS_PARENT:
-                    case SERVER_SOCKET_CONC_ERR_CANNOT_FORK:
-                    {
-                        socket_fsm = ACCEPT;
-                    }
-                    break;
-
-                    case SERVER_SOCKET_CONC_SUCCESS_CHILD:
-                    {
-                        socket_fsm = SSL_HANDSHAKE;
-                    }
-
-                    default:
-                    break;
+                    socket_fsm = REFUSE;
                 }
+
+                // Otherwise, create a new thread to handle the incoming connection. Such thread should perform:
+                //  ·SSL_HANDSHAKE
+                //  ·INTERACT
+                //  ·CLOSE_CLIENT
+                // Those states will be iterated within its very own FSM. It will be called CLIENT_CONN_HANDLE_FSM.
+                // When it comes to the current FSM (SOCKET_FSM), no state should be added, but instead the states mentioned above
+                // set to be executed by the thread's routine should be executed will be removed.
+                    // Input parameters should include all of the necessary items for the following functions to be properly executed:
+                    // static int SocketStateSSLHandshake(int client_socket, bool non_blocking);
+                    // static int (*SocketStateInteract)(int client_socket); (a pointer to a function, actually)
+                socket_fsm = ACCEPT;
             }
-            break;
 
             // Refuse the incomming connection if it is not allowed
             case REFUSE:
@@ -441,46 +432,6 @@ int ServerSocketRun(int server_port                                     ,
                 SocketStateRefuse(client_socket);
 
                 socket_fsm = ACCEPT;
-            }
-            break;
-
-            // Perform SSL / TLS handshake to make the connection secure
-            case SSL_HANDSHAKE:
-            {
-                if(!secure)
-                {
-                    socket_fsm = INTERACT;
-                    continue;
-                }
-
-                if(SocketStateSSLHandshake(client_socket, non_blocking) >= 0)
-                    socket_fsm = INTERACT;
-                else
-                    socket_fsm = ACCEPT;
-            }
-            break;
-
-            // Interact with client
-            case INTERACT:
-            {
-                if(SocketStateInteract(client_socket) > 0)
-                    socket_fsm = INTERACT;
-                else
-                    socket_fsm = CLOSE_CLIENT;
-            }
-            break;
-
-            // Close client socket instance if required
-            case CLOSE_CLIENT:
-            {
-                SocketStateClose(client_socket);
-
-                // If server allows multiple instances, then this point may only be reached by a child process, so socket must be closed.
-                if(concurrent && max_conn_num > 1)
-                    socket_fsm = CLOSE;
-                else
-                    socket_fsm = ACCEPT;
-
             }
             break;
 

@@ -63,7 +63,7 @@ typedef enum
     BIND                ,
     LISTEN              ,
     ACCEPT              ,
-    MANAGE_CONCURRENCY  ,
+    MANAGE_THREADS      ,
     REFUSE              ,
     SSL_HANDSHAKE       ,
     INTERACT            ,
