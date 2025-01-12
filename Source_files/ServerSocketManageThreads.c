@@ -166,7 +166,8 @@ static void* ServerSocketThreadRoutine(void* args)
         }
     }
 
-    return NULL;
+    pthread_detach(pthread_self());
+    pthread_exit(NULL);
 }
 
 static void SocketFreeThreadsData()
@@ -183,12 +184,14 @@ static int SocketKillAllThreads()
     int thread_cancel_status = 0;
     
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
-        if(pthread_cancel(server_instances_data[thread_idx].active))
+        if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
+        {
             if(pthread_cancel(server_instances_data[thread_idx].thread))
                 thread_cancel_status = -1;
             else
                 pthread_join(server_instances_data[thread_idx].thread, NULL);
-    
+        }
+
     return thread_cancel_status;
 }
 
@@ -246,8 +249,9 @@ int SocketLaunchServerInstance(int client_socket)
 
 int SocketFreeThreadsResources()
 {
-    SocketKillAllThreads();
+    int kill_threads = SocketKillAllThreads();
     SocketFreeThreadsData();
+    return kill_threads;
 }
 
 /*************************************/
