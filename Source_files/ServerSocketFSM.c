@@ -10,7 +10,8 @@
 #include <openssl/err.h>
 #include "ServerSocketUse.h"
 #include "ServerSocketFSM.h"
-#include "ServerSocketConcurrency.h"
+// #include "ServerSocketConcurrency.h"
+#include "ServerSocketManageThreads.h"
 #include "ServerSocketSSL.h"
 #include "ServerSocketDefaultInteract.h"
 #include "SeverityLog_api.h"
@@ -22,7 +23,6 @@
 /***********************************/
 
 static volatile int ctrlCPressed        = 0;
-static pid_t*       server_instances    = NULL;
 
 /***********************************/
 
@@ -33,13 +33,8 @@ static pid_t*       server_instances    = NULL;
 /// @brief Frees previously heap allocated memory before exiting the program.
 static void SocketFreeResources(void)
 {
-    SocketKillAllThreads();
-    // if(server_instances != NULL)
-    // {
-    //     LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
-    //     free(server_instances);
-    //     server_instances = NULL;
-    // }
+    LOG_DBG(SERVER_SOCKET_MSG_THREADS_CLEAN);
+    SocketFreeThreadsResources();
 
     if(*(ServerSocketGetPointerToSSLData()) != NULL)
     {
@@ -175,11 +170,6 @@ static int SocketStateListen(int socket_desc, int max_conn_num)
 static int SocketStateAccept(int socket_desc, bool non_blocking)
 {
     int client_socket = SocketAccept(socket_desc, non_blocking);
-
-    // if(client_socket < 0)
-    //     LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
-    // else
-    //     LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     
     if(client_socket >= 0)
         LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
@@ -187,47 +177,16 @@ static int SocketStateAccept(int socket_desc, bool non_blocking)
     return client_socket;
 }
 
-/// @brief Manage concurrent server instances.
-/// @param client_socket Client socket descriptor.
-/// @param server_instance_processes Array which contains PIDs of each running server socket instance.
-/// @param max_conn_num Maximum amount of allowed clients (== server socket instances).
-/// @return < 0 if new instance could not be created. Otherwise, 0 if current process is parent, 1 if it is child server isntance.
-static int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num)
+static int SocketStateManageThreads(int client_socket)
 {
-    // Check if any server socket instance may be created.
-    int possible_new_instance = ServerSocketPossibleNewInstance(server_instance_processes, max_conn_num);
-
-    if(possible_new_instance < 0)
-    {
-        LOG_WNG(SERVER_SOCKET_MSG_MAX_CONNS_REACHED);
-        return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
-    }
-
-    int retfork = fork();
-
-    if(retfork < 0)
-    {
-        LOG_ERR(SERVER_SOCKET_MSG_CANNOT_FORK);
-        return SERVER_SOCKET_CONC_ERR_CANNOT_FORK;
-    }
-
-    if(retfork > 0)
-    {
-        int new_server_instance_index = ServerSocketNewInstanceSpotIndex(server_instance_processes, max_conn_num);
-
-        if(new_server_instance_index < 0)
-        {
-            return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
-        }
-
-        server_instance_processes[new_server_instance_index] = retfork;
-
-        LOG_DBG(SERVER_SOCKET_MSG_NEW_PROCESS, retfork);
-
-        return SERVER_SOCKET_CONC_SUCCESS_PARENT;
-    }
-
-    return SERVER_SOCKET_CONC_SUCCESS_CHILD;
+    int new_server_instance = SocketLaunchServerInstance(client_socket);
+    
+    if(new_server_instance < 0)
+        LOG_ERR(SERVER_SOCKET_MANAGE_THREADS_NOK);
+    else
+        LOG_INF(SERVER_SOCKET_MANAGE_THREADS_OK);
+    
+    return new_server_instance;
 }
 
 /// @brief Refuse incoming connection. To be called when there are no free spots for a new server instance.
@@ -244,40 +203,9 @@ static int SocketStateRefuse(int client_socket)
 
     sleep(SERVER_SOCKET_SECONDS_AFTER_REFUSAL);
 
-    int close_socket = SocketStateClose(client_socket);
+    int close_socket = CloseSocket(client_socket);
 
     return close_socket;
-}
-
-/// @brief Perform SSL handshake if needed.
-/// @param client_socket Client socket instance.
-/// @param bool non_blocking Tells whether or not is the socket non-blocking.
-/// @return 0 if handhsake was successfully performed, < 0 otherwise.
-static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
-{
-    int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
-
-    if(ssl_handshake != SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS)
-        LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
-    else
-        LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
-
-    return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
-}
-
-/// @brief Close socket.
-/// @param client_socket Socket file descriptor.
-/// @return < 0 if it failed to close the socket.
-static int SocketStateClose(int client_socket)
-{
-    int close = CloseSocket(client_socket);
-    
-    if(close < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket);
-    else
-        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket);
-
-    return close;    
 }
 
 /// @brief Runs server socket.
@@ -314,7 +242,7 @@ int ServerSocketRun(int server_port                                     ,
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int client_socket;
-    int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn;
+    int (*SocketStateInteract)(int client_socket)  = SocketDefaultInteractFn;
 
     if(CustomSocketStateInteract != NULL)
         SocketStateInteract = CustomSocketStateInteract;
@@ -392,8 +320,6 @@ int ServerSocketRun(int server_port                                     ,
             {
                 client_socket = SocketStateAccept(socket_desc, non_blocking);
 
-                // A new thread is created per received connection regardless of the fact that it may be the only connection available.
-                // Thus, it should always hit the MANAGE_THREADS on condition incoming connection attempt has been accepted by the server.
                 if(client_socket >= 0)
                     socket_fsm = MANAGE_THREADS;
             }
@@ -403,28 +329,14 @@ int ServerSocketRun(int server_port                                     ,
             // Should manage threads instead of processes:
             case MANAGE_THREADS:
             {
-                // The function below tells whether it exists a spot for a new thread expected to execute all of the following operation states:
-                // SSL_HANDSHAKE, INTERACT, CLOSE_CLIENT
                 int manage_threads = SocketStateManageThreads(client_socket);
 
-                // If the number of threads exceeds the allowed quantity, then refuse the incoming connection.
-                if(manage_threads < 0)
-                {
+                if(manage_threads >= 0)
+                    socket_fsm = ACCEPT;
+                else
                     socket_fsm = REFUSE;
-                }
-
-                // Otherwise, create a new thread to handle the incoming connection. Such thread should perform:
-                //  ·SSL_HANDSHAKE
-                //  ·INTERACT
-                //  ·CLOSE_CLIENT
-                // Those states will be iterated within its very own FSM. It will be called CLIENT_CONN_HANDLE_FSM.
-                // When it comes to the current FSM (SOCKET_FSM), no state should be added, but instead the states mentioned above
-                // set to be executed by the thread's routine should be executed will be removed.
-                    // Input parameters should include all of the necessary items for the following functions to be properly executed:
-                    // static int SocketStateSSLHandshake(int client_socket, bool non_blocking);
-                    // static int (*SocketStateInteract)(int client_socket); (a pointer to a function, actually)
-                socket_fsm = ACCEPT;
             }
+            break;
 
             // Refuse the incomming connection if it is not allowed
             case REFUSE:
