@@ -23,6 +23,16 @@
 
 /************************************/
 
+/*************************************/
+/**** Private function prototypes ****/
+/*************************************/
+
+static void ServerSocketShowReadData(char* rx_buffer);
+
+/*************************************/
+
+/// @brief Displays read data.
+/// @param rx_buffer Reception buffer.
 static void ServerSocketShowReadData(char* rx_buffer)
 {
     if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\n')
@@ -39,8 +49,6 @@ static void ServerSocketShowReadData(char* rx_buffer)
 
 /// @brief Reads from client, then sends a response.
 /// @param client_socket Client socket.
-/// @param secure True if TLS security is wanted, false otherwise.
-/// @param ssl SSL data.
 /// @return < 0 if any error happened, 0 otherwise.
 int SocketDefaultInteractFn(int client_socket)
 {
