@@ -2,12 +2,40 @@
 /******** Include statements ********/
 /************************************/
 
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ServerSocketSSL.h"
 #include "ServerSocketUse.h"
 #include "ServerSocketManageThreads.h"
 #include "SeverityLog_api.h"
+
+/************************************/
+
+/************************************/
+/********* Define statements ********/
+/************************************/
+
+#define SERVER_SOCKET_MANAGE_THREADS_SUCCESS            0
+#define SERVER_SOCKET_THREADS_ALLOCATION_FAILURE        -1
+#define SERVER_SOCKET_MANAGE_THREAD_CREATION_FAILURE    -2
+#define SERVER_SOCKET_MANAGE_THREAD_NO_FREE_SPOTS       -3
+#define SERVER_SOCKET_DATA_CLEAN_FAILURE                -4
+
+#define SERVER_SOCKET_MSG_ERR_CREATE_THREAD         "An error ocurred while creating thread: <%s>"
+#define SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS         "Maximum number of connections has already been reached: <%d>"
+#define SERVER_SOCKET_MSG_THREAD_CREATION_SUCCESS   "Successfully created thread for client socket <%d> (TID: <%lu>)"
+#define SERVER_SOCKET_MSG_CANCELLING_THREAD         "Cancelling thread with ID: %lu"
+#define SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION   "An error happened while cancelling thread with ID: %lu"
+#define SERVER_SOCKET_MSG_JOINING_THREAD            "Joining thread with ID: %lu"
+#define SERVER_SOCKET_MSG_ERR_THREAD_JOIN           "An error happened while joining thread with ID: %lu"
+
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK     "SSL handshake failed."
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK      "SSL handshake succeeded."
+
+#define SERVER_SOCKET_MSG_CLOSE_NOK             "An error happened while closing socket <%d>."
+#define SERVER_SOCKET_MSG_CLOSE_OK              "Socket <%d> successfully closed."
 
 /************************************/
 
@@ -56,6 +84,19 @@ static SERVER_SOCKET_THREAD_DATA* server_instances_data = NULL;
 static SERVER_SOCKET_THREAD_COMMON_ARGS* server_instances_common_args = NULL;
 
 /***********************************/
+
+/*************************************/
+/**** Private function prototypes ****/
+/*************************************/
+
+static int SocketStateSSLHandshake(int client_socket, bool non_blocking);
+static int SocketStateClose(int client_socket);
+static int SocketThreadDataClean(int client_socket);
+static void* ServerSocketThreadRoutine(void* args);
+static void SocketFreeThreadsData();
+static int SocketKillAllThreads();
+
+/*************************************/
 
 /*************************************/
 /******* Function definitions ********/
@@ -182,17 +223,33 @@ static void SocketFreeThreadsData()
 static int SocketKillAllThreads()
 {
     int thread_cancel_status = 0;
-    
+    int thread_join_status = 0;
+
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
         {
-            if(pthread_cancel(server_instances_data[thread_idx].thread))
-                thread_cancel_status = -1;
-            else
-                pthread_join(server_instances_data[thread_idx].thread, NULL);
+            LOG_DBG(SERVER_SOCKET_MSG_CANCELLING_THREAD, server_instances_data[thread_idx].thread);
+            
+            thread_cancel_status = pthread_cancel(server_instances_data[thread_idx].thread);
+            
+            if(thread_cancel_status < 0)
+            {
+                LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION, server_instances_data[thread_idx].thread);
+                return thread_cancel_status;
+            }
+
+            LOG_DBG(SERVER_SOCKET_MSG_JOINING_THREAD, server_instances_data[thread_idx].thread);
+
+            thread_join_status = pthread_join(server_instances_data[thread_idx].thread, NULL);
+
+            if(thread_join_status < 0)
+            {
+                LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_JOIN, server_instances_data[thread_idx].thread);
+                return thread_join_status;
+            }
         }
 
-    return thread_cancel_status;
+    return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
 }
 
 int SocketSetupThreads(int max_conn_num, bool secure, bool non_blocking, int (*interact_fn)(int client_socket))
