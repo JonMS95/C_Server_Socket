@@ -17,8 +17,8 @@
 #define SERVER_SOCKET_LEN_RX_BUFFER             256     // RX buffer size.
 #define SERVER_SOCKET_LEN_TX_BUFFER             256     // TX buffer size.
 
-#define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>"
-#define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>"
+#define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>."
+#define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>."
 #define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
 
 /************************************/
