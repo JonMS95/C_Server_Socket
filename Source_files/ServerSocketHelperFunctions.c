@@ -3,6 +3,7 @@
 /************************************/
 
 #include <arpa/inet.h>      // sockaddr_in, inet_addr
+#include <stdlib.h>         // EXIT_FAILURE
 #include <unistd.h>
 #include "ServerSocketSSL.h"
 #include "SeverityLog_api.h"
@@ -56,7 +57,7 @@ int ServerSocketRead(int client_socket, char* rx_buffer, unsigned long rx_buffer
     if(!ServerSocketIsSecure())
         read_from_socket = read(client_socket, rx_buffer, rx_buffer_size);
     else
-        read_from_socket = SSL_read(*(ServerSocketGetPointerToSSLData()), rx_buffer, rx_buffer_size);
+        read_from_socket = ServerSocketSSLRead(rx_buffer, rx_buffer_size);
     
     return read_from_socket;
 }
@@ -80,7 +81,7 @@ int ServerSocketWrite(int client_socket, const char* tx_buffer, unsigned long tx
     if(!ServerSocketIsSecure())
         write_to_socket = write(client_socket, tx_buffer, tx_buffer_size);
     else
-        write_to_socket = SSL_write(*(ServerSocketGetPointerToSSLData()), tx_buffer, tx_buffer_size);
+        write_to_socket = ServerSocketSSLWrite(tx_buffer, tx_buffer_size);
     
     return write_to_socket;
 }
