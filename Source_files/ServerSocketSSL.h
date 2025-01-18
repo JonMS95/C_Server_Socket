@@ -5,23 +5,7 @@
 /******** Include statements ********/
 /************************************/
 
-#include <openssl/ssl.h>    // OpenSSL.
 #include <stdbool.h>
-
-/************************************/
-
-/************************************/
-/********* Define statements ********/
-/************************************/
-
-#define SERVER_SOCKET_SETUP_SSL_NULL_CTX    -1
-#define SERVER_SOCKET_SETUP_SSL_SUCCESS     1
-
-#define SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS 1
-
-#define SERVER_SOCKET_HOME_OS_DIR_NAME      "HOME"
-#define SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY  "Path to certificate: <%s>"
-#define SERVER_SOCKET_MSG_PATH_TO_CERT      "Path to private key: <%s>"
 
 /************************************/
 
@@ -29,12 +13,12 @@
 /******** Function prototypes ********/
 /*************************************/
 
-SSL** ServerSocketGetPointerToSSLData(void);
-SSL_CTX** ServerSocketGetPointerToSSLContext(void);
 bool ServerSocketIsSecure(void);
-
 int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path);
 int ServerSocketSSLHandshake(int client_socket, bool non_blocking);
+int ServerSocketSSLRead(char* rx_buffer, unsigned long rx_buffer_size);
+int ServerSocketSSLWrite(const char* tx_buffer, unsigned long tx_buffer_size);
+void SocketFreeSSLResources(void);
 
 /*************************************/
 
