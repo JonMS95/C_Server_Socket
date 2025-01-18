@@ -23,19 +23,19 @@
 #define SERVER_SOCKET_MANAGE_THREAD_NO_FREE_SPOTS       -3
 #define SERVER_SOCKET_DATA_CLEAN_FAILURE                -4
 
-#define SERVER_SOCKET_MSG_ERR_CREATE_THREAD         "An error ocurred while creating thread: <%s>"
-#define SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS         "Maximum number of connections has already been reached: <%d>"
-#define SERVER_SOCKET_MSG_THREAD_CREATION_SUCCESS   "Successfully created thread for client socket <%d> (TID: <%lu>)"
-#define SERVER_SOCKET_MSG_CANCELLING_THREAD         "Cancelling thread with ID: %lu"
-#define SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION   "An error happened while cancelling thread with ID: %lu"
-#define SERVER_SOCKET_MSG_JOINING_THREAD            "Joining thread with ID: %lu"
-#define SERVER_SOCKET_MSG_ERR_THREAD_JOIN           "An error happened while joining thread with ID: %lu"
+#define SERVER_SOCKET_MSG_ERR_CREATE_THREAD         "An error ocurred while creating thread: <%s>."
+#define SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS         "Maximum number of connections has already been reached: <%d>."
+#define SERVER_SOCKET_MSG_THREAD_CREATION_SUCCESS   "Successfully created thread for client socket <%d> (TID: <%lu>)."
+#define SERVER_SOCKET_MSG_CANCELLING_THREAD         "Cancelling thread with ID: <%lu>."
+#define SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION   "An error happened while cancelling thread with ID: <%lu>."
+#define SERVER_SOCKET_MSG_JOINING_THREAD            "Joining thread with ID: <%lu>."
+#define SERVER_SOCKET_MSG_ERR_THREAD_JOIN           "An error happened while joining thread with ID: <%lu>."
 
-#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK     "SSL handshake failed."
-#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK      "SSL handshake succeeded."
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK "SSL handshake failed."
+#define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK  "SSL handshake succeeded."
 
-#define SERVER_SOCKET_MSG_CLOSE_NOK             "An error happened while closing socket <%d>."
-#define SERVER_SOCKET_MSG_CLOSE_OK              "Socket <%d> successfully closed."
+#define SERVER_SOCKET_MSG_CLOSE_NOK "An error happened while closing socket <%d> (TID: <%lu>)."
+#define SERVER_SOCKET_MSG_CLOSE_OK  "Socket <%d> successfully closed (TID: <%lu>)."
 
 /************************************/
 
@@ -62,8 +62,7 @@ typedef struct
 {
     int client_socket;
     SERVER_SOCKET_THREAD_COMMON_ARGS* thread_common_args;
-}
-SERVER_SOCKET_THREAD_ARGS;
+} SERVER_SOCKET_THREAD_ARGS;
 
 typedef struct
 {
@@ -110,12 +109,12 @@ static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
 {
     int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
 
-    if(ssl_handshake != SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS)
+    if(ssl_handshake < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
     else
         LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
 
-    return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
+    return ssl_handshake;
 }
 
 /// @brief Close socket.
@@ -126,9 +125,9 @@ static int SocketStateClose(int client_socket)
     int close = CloseSocket(client_socket);
     
     if(close < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket);
+        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket, pthread_self());
     else
-        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket);
+        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket, pthread_self());
 
     return close;    
 }
