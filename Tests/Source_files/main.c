@@ -121,6 +121,7 @@ int main(int argc, char** argv)
 {
     SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
     SetSeverityLogPrintTimeStatus(true);
+    SetSeverityLogPrintExeNameStatus(true);
 
     int server_port             ;
     int max_clients_num         ;
@@ -249,6 +250,12 @@ int main(int argc, char** argv)
                     path_cert           ,
                     path_pkey           ,
                     NULL                );
+
+    if(path_cert != NULL)
+        free(path_cert);
+
+    if(path_pkey != NULL)
+        free(path_pkey);
 
     return 0;
 }
