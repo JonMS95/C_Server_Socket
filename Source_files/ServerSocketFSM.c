@@ -3,10 +3,9 @@
 /************************************/
 
 #include <stdlib.h>         // malloc, calloc, realloc, free.
-#include <unistd.h>         // Fork if concurrency is accepted.
+#include <unistd.h>         // Write, sleep.
 #include <string.h>         // strlen
 #include <signal.h>         // Shutdown signal.
-#include <openssl/err.h>
 #include "ServerSocketUse.h"
 #include "ServerSocketManageThreads.h"
 #include "ServerSocketSSL.h"
@@ -22,9 +21,6 @@
 
 #define SERVER_SOCKET_SET_SIGINT_ERR            "Error while trying to set up SIGINT handler."
 #define SERVER_SOCKET_MSG_SIGINT_RECEIVED       "Received Ctrl+C (SIGINT). Cleaning up and exiting."
-#define SERVER_SOCKET_MSG_THREADS_CLEAN         "Cleaning up server instances."
-#define SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX   "Cleaning up server SSL context."
-#define SERVER_SOCKET_MSG_CLEANING_UP_SSL       "Cleaning up server SSL data."
 #define SERVER_SOCKET_MSG_CREATION_NOK          "Socket file descriptor creation failed."
 #define SERVER_SOCKET_MSG_CREATION_OK           "Socket file descriptor created."
 #define SERVER_SOCKET_MSG_SETUP_SSL_NOK         "SSL setup failed."
@@ -90,7 +86,10 @@ static int SocketStateOptions(  int             socket_desc     ,
                                 unsigned long   tx_timeout_secs ,
                                 unsigned long   tx_timeout_usecs);
 static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path);
-static int SocketStateBind(int socket_desc, int server_port);
+static int SocketStateBind( int socket_desc             ,
+                            int server_port             ,
+                            sa_family_t address_family  ,
+                            in_addr_t allowed_IPs       );
 static int SocketStateListen(int socket_desc, int max_conn_num);
 static int SocketStateAccept(int socket_desc, bool non_blocking);
 static int SocketStateManageThreads(int client_socket);
@@ -105,29 +104,8 @@ static int SocketStateRefuse(int client_socket);
 /// @brief Frees previously heap allocated memory before exiting the program.
 static void SocketFreeResources(void)
 {
-    LOG_DBG(SERVER_SOCKET_MSG_THREADS_CLEAN);
     SocketFreeThreadsResources();
-
-    if(*(ServerSocketGetPointerToSSLData()) != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
-        SSL_free(*(ServerSocketGetPointerToSSLData()));
-    }
-
-    if(*(ServerSocketGetPointerToSSLContext()) != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
-        SSL_CTX_free(*(ServerSocketGetPointerToSSLContext()));
-    }
-
-    ERR_free_strings();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    CONF_modules_unload(1);
-    CONF_modules_free();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
+    SocketFreeSSLResources();
 }
 
 /// @brief Handle SIGINT signal (Ctrl+C).
@@ -193,23 +171,25 @@ static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
 
-    if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
+    if(server_socket_SSL_setup < 0)
         LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
     else
         LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
 
-    return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
+    return server_socket_SSL_setup;
 }
 
 /// @brief Bind socket to an IP address and port.
 /// @param socket_desc Socket file descriptor.
 /// @param server_port The port which is going to be used to listen to incoming connections.
+/// @param address_family Address family the server is going to work with.
+/// @param allowed_IPs Use INADDR_ANY to allow any IP, specify it otherwise.
 /// @return < 0 if it failed to bind.
-static int SocketStateBind(int socket_desc, int server_port)
+static int SocketStateBind(int socket_desc, int server_port, sa_family_t address_family, in_addr_t allowed_IPs)
 {
-    struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
+    // struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
-    int bind_socket = BindSocket(socket_desc, server);
+    int bind_socket = BindSocket(socket_desc, server_port, address_family, allowed_IPs);
 
     if(bind_socket < 0)
         LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
@@ -371,7 +351,7 @@ int ServerSocketRun(int server_port                                     ,
             // Bind socket descriptor to a specified port
             case BIND:
             {
-                if(SocketStateBind(socket_desc, server_port) >= 0)
+                if(SocketStateBind(socket_desc, server_port, AF_INET, INADDR_ANY) >= 0)
                     socket_fsm = LISTEN;
             }
             break;
