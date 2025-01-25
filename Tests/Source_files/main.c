@@ -116,6 +116,7 @@
 
 /***************************************/
 
+/// @brief Constructor function. Inits logs.
 __attribute__((constructor)) static void TestServerSocketLoad(void)
 {
     SeverityLogInit(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SVRTY_LOG_MASK_ALL, true, true);
