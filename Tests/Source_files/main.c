@@ -13,6 +13,8 @@
 /********** Private constants **********/
 /***************************************/
 
+#define SERVER_SOCKET_TEST_LOG_BUFFER_SIZE  10000
+
 /************ Port settings ************/
 
 #define PORT_OPT_CHAR                       'r'
@@ -113,6 +115,11 @@
 #define PKEY_DEFAULT_VALUE                  "~/Desktop/scripts/certificate_test/private.key"
 
 /***************************************/
+
+__attribute__((constructor)) static void TestServerSocketLoad(void)
+{
+    SeverityLogInit(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SVRTY_LOG_MASK_ALL, true, true);
+}
 
 /*
 @brief Main function. Program's entry point.
