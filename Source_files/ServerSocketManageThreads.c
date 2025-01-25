@@ -213,16 +213,25 @@ static void* ServerSocketThreadRoutine(void* args)
 static void SocketFreeThreadsData()
 {
     if(server_instances_common_args)
+    {
         free(server_instances_common_args);
+        server_instances_common_args = NULL;
+    }
 
-    if(server_instances_data != NULL)
+    if(server_instances_data)
+    {
         free(server_instances_data);
+        server_instances_data = NULL;
+    }
 }
 
 static int SocketKillAllThreads()
 {
     int thread_cancel_status = 0;
     int thread_join_status = 0;
+
+    if(server_instances_data == NULL)
+        return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
 
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
