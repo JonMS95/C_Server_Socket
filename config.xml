@@ -11,32 +11,33 @@
     />
     <!-- Directory structure -->
     <Directories>
-        <Dynamic_libraries/>
-        <Dependency_files>
-            <Header_files/>
-            <Dynamic_libraries/>
-        </Dependency_files>
-        <Tests>
-            <Dependency_files>
-                <Dynamic_libraries/>
-                <Header_files/>
-            </Dependency_files>
-            <Executable_files/>
-        </Tests>
+        <lib/>
+        <API/>
+        <deps>
+            <lib/>
+            <inc/>
+        </deps>
+        <test>
+            <deps>
+                <lib/>
+                <inc/>
+            </deps>
+            <exe/>
+        </test>
     </Directories>
     
     <!-- Common shell files location -->
     <Common_shell_files
         version_major="1"
-        version_minor="2"
-        version_mode="RELEASE"
+        version_minor="3"
+        version_mode="DEBUG"
         local_path="~/Desktop/scripts/C/C_Common_shell_files"
         URL="https://github.com/JonMS95/C_Common_shell_files"
     />
 
     <!-- API -->
     <!-- Dependencies -->
-    <Dependencies Dest="Dependency_files">
+    <deps Dest="deps">
         <C_Severity_Log
             version_major="1"
             version_minor="4"
@@ -44,12 +45,22 @@
             local_path="~/Desktop/scripts/C/C_Severity_Log"
             URL="https://github.com/JonMS95/C_Severity_Log"
         />
-    </Dependencies>
+        <OpenSSL
+                type="APT_package"
+                lib_name="ssl"
+                package="libssl-dev"
+        />
+        <Crypto
+            type="APT_package"
+            lib_name="crypto"
+            package="libssl-dev"
+        />
+    </deps>
 
     <!-- Tests -->
     <!-- Paths to dependency files for the testing executable. -->
-    <Tests>
-        <Dependencies Dest="Tests/Dependency_files">
+    <test>
+        <deps Dest="test/deps">
             <C_Severity_Log
                 version_major="1"
                 version_minor="4"
@@ -59,8 +70,8 @@
             />
             <C_Arg_Parse
                 version_major="1"
-                version_minor="4"
-                version_mode="RELEASE"
+                version_minor="5"
+                version_mode="DEBUG"
                 local_path="~/Desktop/scripts/C/C_Arg_Parse"
                 URL="https://github.com/JonMS95/C_Arg_Parse"
             />
@@ -71,14 +82,16 @@
                 local_path="~/Desktop/scripts/C/C_Server_Socket"
                 URL="https://github.com/JonMS95/C_Server_Socket"
             />
-            <SSL
-                local_path="/usr/lib/x86_64-linux-gnu/libssl.so"
-                type="built-in"
+            <OpenSSL
+                type="APT_package"
+                lib_name="ssl"
+                package="libssl-dev"
             />
             <Crypto
-                local_path="/usr/lib/x86_64-linux-gnu/libcrypto.so"
-                type="built-in"
+                type="APT_package"
+                lib_name="crypto"
+                package="libssl-dev"
             />
-        </Dependencies>
-    </Tests>
+        </deps>
+    </test>
 </config>
