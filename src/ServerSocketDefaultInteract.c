@@ -43,7 +43,7 @@ static void ServerSocketShowReadData(char* rx_buffer)
 
     if(strlen(rx_buffer) > 0)
     {
-        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
     }
 }
 
@@ -69,7 +69,7 @@ int SocketDefaultInteractFn(int client_socket)
         // Check if the client is still connected, or if no data has been received.
         if(read_from_socket == 0)
         {
-            LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
+            SVRTY_LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
             break;
         }
 

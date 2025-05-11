@@ -49,8 +49,8 @@ int ServerSocketRead(int client_socket, char* rx_buffer, unsigned long rx_buffer
 
     if(rx_buffer_size == 0)
     {
-        LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_RX_BUFFER_SIZE);
-        LOG_DBG(SERVER_SOCKET_HELPER_MSG_RX_BUFFER_NAME, getName(rx_buffer), rx_buffer_size);
+        SVRTY_LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_RX_BUFFER_SIZE);
+        SVRTY_LOG_DBG(SERVER_SOCKET_HELPER_MSG_RX_BUFFER_NAME, getName(rx_buffer), rx_buffer_size);
         exit(EXIT_FAILURE);
     }
 
@@ -73,8 +73,8 @@ int ServerSocketWrite(int client_socket, const char* tx_buffer, unsigned long tx
 
     if(tx_buffer_size == 0)
     {
-        LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_TX_BUFFER_SIZE);
-        LOG_DBG(SERVER_SOCKET_HELPER_MSG_TX_BUFFER_NAME, getName(tx_buffer), tx_buffer_size);
+        SVRTY_LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_TX_BUFFER_SIZE);
+        SVRTY_LOG_DBG(SERVER_SOCKET_HELPER_MSG_TX_BUFFER_NAME, getName(tx_buffer), tx_buffer_size);
         exit(EXIT_FAILURE);
     }
 

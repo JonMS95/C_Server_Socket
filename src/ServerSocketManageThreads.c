@@ -110,9 +110,9 @@ static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
     int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
 
     if(ssl_handshake < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
 
     return ssl_handshake;
 }
@@ -125,9 +125,9 @@ static int SocketStateClose(int client_socket)
     int close = CloseSocket(client_socket);
     
     if(close < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket, pthread_self());
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket, pthread_self());
     else
-        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket, pthread_self());
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket, pthread_self());
 
     return close;    
 }
@@ -236,23 +236,23 @@ static int SocketKillAllThreads()
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
         {
-            LOG_DBG(SERVER_SOCKET_MSG_CANCELLING_THREAD, server_instances_data[thread_idx].thread);
+            SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CANCELLING_THREAD, server_instances_data[thread_idx].thread);
             
             thread_cancel_status = pthread_cancel(server_instances_data[thread_idx].thread);
             
             if(thread_cancel_status < 0)
             {
-                LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION, server_instances_data[thread_idx].thread);
+                SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION, server_instances_data[thread_idx].thread);
                 return thread_cancel_status;
             }
 
-            LOG_DBG(SERVER_SOCKET_MSG_JOINING_THREAD, server_instances_data[thread_idx].thread);
+            SVRTY_LOG_DBG(SERVER_SOCKET_MSG_JOINING_THREAD, server_instances_data[thread_idx].thread);
 
             thread_join_status = pthread_join(server_instances_data[thread_idx].thread, NULL);
 
             if(thread_join_status < 0)
             {
-                LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_JOIN, server_instances_data[thread_idx].thread);
+                SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_THREAD_JOIN, server_instances_data[thread_idx].thread);
                 return thread_join_status;
             }
         }
@@ -299,16 +299,16 @@ int SocketLaunchServerInstance(int client_socket)
 
             if(thread_creation_status < 0)
             {
-                LOG_WNG(SERVER_SOCKET_MSG_ERR_CREATE_THREAD, strerror(thread_creation_status));
+                SVRTY_LOG_WNG(SERVER_SOCKET_MSG_ERR_CREATE_THREAD, strerror(thread_creation_status));
                 return SERVER_SOCKET_MANAGE_THREAD_CREATION_FAILURE;
             }
             
-            LOG_INF(SERVER_SOCKET_MSG_THREAD_CREATION_SUCCESS, client_socket, server_instances_data[thread_idx].thread);
+            SVRTY_LOG_INF(SERVER_SOCKET_MSG_THREAD_CREATION_SUCCESS, client_socket, server_instances_data[thread_idx].thread);
             return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
         }
     }
     
-    LOG_WNG(SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS, server_instances_num);
+    SVRTY_LOG_WNG(SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS, server_instances_num);
     return SERVER_SOCKET_MANAGE_THREAD_NO_FREE_SPOTS;
 }
 

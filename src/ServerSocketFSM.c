@@ -114,7 +114,7 @@ static void SocketSIGINTHandler(int signum)
 {
     // NEW VERSION (THREADS): apart from freeing all resources, all threads must be terminated.
     // For such thing to be possible, threads should be cancellable (deferred).
-    LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
+    SVRTY_LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
     ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
 
     SocketFreeResources();
@@ -129,9 +129,9 @@ static int SocketStateCreate(void)
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
     if(socket_desc < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
 
     return socket_desc;
 }
@@ -156,9 +156,9 @@ static int SocketStateOptions(  int             socket_desc     ,
     int socket_options = SocketOptions(socket_desc, reuse_address, reuse_port, rx_timeout_secs, rx_timeout_usecs, tx_timeout_secs, tx_timeout_usecs);
 
     if(socket_options < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
 
     return socket_options;
 }
@@ -172,9 +172,9 @@ static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path)
     int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
 
     if(server_socket_SSL_setup < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
 
     return server_socket_SSL_setup;
 }
@@ -192,9 +192,9 @@ static int SocketStateBind(int socket_desc, int server_port, sa_family_t address
     int bind_socket = BindSocket(socket_desc, server_port, address_family, allowed_IPs);
 
     if(bind_socket < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
     
     return bind_socket;
 }
@@ -208,9 +208,9 @@ static int SocketStateListen(int socket_desc, int max_conn_num)
     int listen = SocketListen(socket_desc, max_conn_num);
 
     if(listen < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
     
     return listen;
 }
@@ -224,7 +224,7 @@ static int SocketStateAccept(int socket_desc, bool non_blocking)
     int client_socket = SocketAccept(socket_desc, non_blocking);
     
     if(client_socket >= 0)
-        LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     
     return client_socket;
 }
@@ -234,9 +234,9 @@ static int SocketStateManageThreads(int client_socket)
     int new_server_instance = SocketLaunchServerInstance(client_socket);
     
     if(new_server_instance < 0)
-        LOG_ERR(SERVER_SOCKET_MANAGE_THREADS_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MANAGE_THREADS_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MANAGE_THREADS_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MANAGE_THREADS_OK);
     
     return new_server_instance;
 }
@@ -306,7 +306,7 @@ int ServerSocketRun(int server_port                                     ,
 
     if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
     {
-        LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
+        SVRTY_LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
         exit(EXIT_FAILURE);
     }
 

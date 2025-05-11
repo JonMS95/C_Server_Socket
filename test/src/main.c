@@ -119,7 +119,7 @@
 /// @brief Constructor function. Inits logs.
 __attribute__((constructor)) static void TestServerSocketLoad(void)
 {
-    SeverityLogInit(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SVRTY_LOG_MASK_ALL, true, true);
+    SeverityLogInit(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SVRTY_LOG_MASK_ALL, true, true, true);
 }
 
 /*
@@ -127,10 +127,6 @@ __attribute__((constructor)) static void TestServerSocketLoad(void)
 */
 int main(int argc, char** argv)
 {
-    SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
-    SetSeverityLogPrintTimeStatus(true);
-    SetSeverityLogPrintExeNameStatus(true);
-
     int server_port             ;
     int max_clients_num         ;
     bool concurrency_enabled    ;
@@ -238,11 +234,11 @@ int main(int argc, char** argv)
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
     {
-        LOG_ERR("Arguments parsing failed!");
+        SVRTY_LOG_ERR("Arguments parsing failed!");
         return parse_arguments;
     }
 
-    LOG_INF("Arguments successfully parsed!");
+    SVRTY_LOG_INF("Arguments successfully parsed!");
 
     ServerSocketRun(server_port         ,
                     max_clients_num     ,

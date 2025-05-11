@@ -90,8 +90,8 @@ bool ServerSocketIsSecure(void)
 /// @return 1 if succeeded, < 1 if any error ocurred.
 int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path)
 {
-    LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_CERT, cert_path);
-    LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY, priv_key_path);
+    SVRTY_LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_CERT, cert_path);
+    SVRTY_LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY, priv_key_path);
 
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -179,13 +179,13 @@ void SocketFreeSSLResources(void)
 {
     if(*(ServerSocketGetPointerToSSLData()) != NULL)
     {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
+        SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
         SSL_free(*(ServerSocketGetPointerToSSLData()));
     }
 
     if(*(ServerSocketGetPointerToSSLContext()) != NULL)
     {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
+        SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
         SSL_CTX_free(*(ServerSocketGetPointerToSSLContext()));
     }
 

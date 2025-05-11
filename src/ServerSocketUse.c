@@ -158,7 +158,7 @@ int SocketSetNonBlocking(int socket_fd)
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if(flags < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -166,7 +166,7 @@ int SocketSetNonBlocking(int socket_fd)
     flags |= O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -182,7 +182,7 @@ int SocketUnsetNonBlocking(int socket_fd)
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if(flags < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -190,7 +190,7 @@ int SocketUnsetNonBlocking(int socket_fd)
     flags &= ~O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -207,7 +207,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
     struct sockaddr_in client;
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
 
-    LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
+    SVRTY_LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
 
     int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
@@ -222,7 +222,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
     }
 
     if(client_socket >= 0)
-        LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     return client_socket;
 }
