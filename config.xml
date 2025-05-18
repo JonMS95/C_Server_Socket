@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
     <Project_data
-        version_major="1"
-        version_minor="4"
+        version_major="2"
+        version_minor="0"
         version_mode="DEBUG"
         URL="https://github.com/JonMS95/C_Server_Socket"
         type="library"
@@ -31,7 +31,7 @@
         version_major="1"
         version_minor="3"
         version_mode="RELEASE"
-        local_path="~/Desktop/scripts/C/C_Common_shell_files"
+        local_path="~/C_Common_shell_files"
         URL="https://github.com/JonMS95/C_Common_shell_files"
     />
 
@@ -39,10 +39,10 @@
     <!-- Dependencies -->
     <deps Dest="deps">
         <C_Severity_Log
-            version_major="1"
-            version_minor="4"
-            version_mode="DEBUG"
-            local_path="~/Desktop/scripts/C/C_Severity_Log"
+            version_major="2"
+            version_minor="1"
+            version_mode="RELEASE"
+            local_path="~/C_Severity_Log"
             URL="https://github.com/JonMS95/C_Severity_Log"
         />
         <OpenSSL
@@ -62,24 +62,24 @@
     <test>
         <deps Dest="test/deps">
             <C_Severity_Log
-                version_major="1"
-                version_minor="4"
-                version_mode="DEBUG"
-                local_path="~/Desktop/scripts/C/C_Severity_Log"
+                version_major="2"
+                version_minor="1"
+                version_mode="RELEASE"
+                local_path="~/C_Severity_Log"
                 URL="https://github.com/JonMS95/C_Severity_Log"
             />
             <C_Arg_Parse
-                version_major="1"
-                version_minor="5"
-                version_mode="DEBUG"
-                local_path="~/Desktop/scripts/C/C_Arg_Parse"
+                version_major="2"
+                version_minor="0"
+                version_mode="RELEASE"
+                local_path="~/C_Arg_Parse"
                 URL="https://github.com/JonMS95/C_Arg_Parse"
             />
             <C_Server_Socket
-                version_major="1"
-                version_minor="4"
+                version_major="2"
+                version_minor="0"
                 version_mode="DEBUG"
-                local_path="~/Desktop/scripts/C/C_Server_Socket"
+                local_path="."
                 URL="https://github.com/JonMS95/C_Server_Socket"
             />
             <OpenSSL
