@@ -14,6 +14,7 @@
 /***************************************/
 
 #define SERVER_SOCKET_TEST_LOG_BUFFER_SIZE  10000
+#define SERVER_SOCKET_TEST_LOG_INIT_MASK    0xFF
 
 /************ Port settings ************/
 
@@ -119,7 +120,7 @@
 /// @brief Constructor function. Inits logs.
 __attribute__((constructor)) static void TestServerSocketLoad(void)
 {
-    SeverityLogInit(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SVRTY_LOG_MASK_ALL, true, true, true);
+    SeverityLogInitWithMask(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SERVER_SOCKET_TEST_LOG_INIT_MASK);
 }
 
 /*
