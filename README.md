@@ -114,17 +114,17 @@ make
 The result of the line above will be a new API directory (which will match the used version). Within it, a *.h* and a *.so* file will be found.
 - **/path/to/repos/C_Server_Socket/API**
   - **vM_m**
-    - **Dynamic_libraries**
+    - **lib**
       - **_libServerSocket.so.M.m_**
-    - **Header_files**
+    - **inc**
       - **_ServerSocket_api.h_**
 
 Where **_M_** and **_m_** stand for the major and minor version numbers.
-**_ServerSocket_api.h_** could also be found in **_/path/to/repos/C_Server_Socket/Source_files/ServerSocket_api.h_** although it may differ depending on the version.
+**_ServerSocket_api.h_** could also be found in **_/path/to/repos/C_Server_Socket/src/ServerSocket_api.h_** although it may differ depending on the version.
 
 ### Create certificate and private key <a id="create-certificate-and-private-key"></a> 🔐
 
-If executing the default test is not wanted but one without any security requirements, then locally modify [Shell_files/test.sh](Shell_files/test.sh) or run a custom
+If executing the default test is not wanted but one without any security requirements, then locally modify [sh/test.sh](sh/test.sh) or run a custom
 command so that the executable does not use -s, -k and -c options, then go directly to the [test compilation stage](#compile-and-run-test). Otherwise, follow the
 steps described below.
 
@@ -165,15 +165,15 @@ make test
 ```
 
 Again, the one below is the path to the generated executable file:
-- **/path/to/repos/C_Server_Socket/Tests**
-  - **Executable_files**
+- **/path/to/repos/C_Server_Socket/test**
+  - **exe**
       - **_main_**
-  - Source_files
-  - Dependency_files
+  - src
+  - deps
 
 
 ## Usage <a id="usage"></a> 🖱️
-The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/Header_files/ServerSocket_api.h_) or in the [repo file](Source_files/ServerSocket_api.h).
+The following is the main server socket function prototype as found in the **_header API file_** (_/path/to/repos/C_Server_Socket/API/vM_m/inc/ServerSocket_api.h_) or in the [repo file](src/ServerSocket_api.h).
 
 ```c
 C_SERVER_SOCKET_API int ServerSocketRun(int             server_port                                     ,
@@ -212,14 +212,13 @@ provide maximum optionality so each developer can customize its usage as much as
 In exchange, the function returns:
 * **0** if everything went OK, or exit sending **failure signal** if SIGINT signal handler could not be properly set
 
-For reference, a proper API usage example has been provided on the [test source file](Tests/Source_files/main.c).
+For reference, a proper API usage example has been provided on the [test source file](test/src/main.c).
 As this one uses [**C_Arg_Parse library**](https://github.com/JonMS95/C_Arg_Parse), input parameters can be provided by using command-line interface.
-An example of CLI usage is provided in the [**Shell_files/test.sh**](Shell_files/test.sh) file.
+An example of CLI usage is provided in the [**sh/test.sh**](sh/test.sh) file.
 
 
 ## To do <a id="to-do"></a> ☑️
 - [ ] Add UDP support
-- [ ] Use threads instead of parallel processes (more handleable)
 
 
 ## Related Documents <a id="related-documents"></a> 🗄️
