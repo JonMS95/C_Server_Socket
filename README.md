@@ -83,6 +83,7 @@ On top of the ones listed above, there are some *JMS* dependencies (libraries th
 | [C_Common_shell_files](https://github.com/JonMS95/C_Common_shell_files) | Process [configuration file](config.xml) |
 | [C_Severity_Log](https://github.com/JonMS95/C_Severity_Log)             | Show logs                                |
 | [C_Arg_Parse](https://github.com/JonMS95/C_Arg_Parse)                   | Parse command line arguments             |
+| [C_Mutex_Guard](https://github.com/JonMS95/C_Mutex_Guard)               | Manage mutexes safely                    |
 | [C_Client_Socket](https://github.com/JonMS95/C_Client_Socket)           | Test alongside server socket             |
 
 
