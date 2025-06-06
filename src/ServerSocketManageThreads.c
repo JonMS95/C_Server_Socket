@@ -10,6 +10,7 @@
 #include "ServerSocketUse.h"
 #include "ServerSocketManageThreads.h"
 #include "SeverityLog_api.h"
+#include "MutexGuard_api.h"
 
 /************************************/
 
@@ -22,6 +23,7 @@
 #define SERVER_SOCKET_MANAGE_THREAD_CREATION_FAILURE    -2
 #define SERVER_SOCKET_MANAGE_THREAD_NO_FREE_SPOTS       -3
 #define SERVER_SOCKET_DATA_CLEAN_FAILURE                -4
+#define SERVER_SOCKET_MTX_LOCK_FAILURE                  -5
 
 #define SERVER_SOCKET_MSG_ERR_CREATE_THREAD         "An error ocurred while creating thread: <%s>."
 #define SERVER_SOCKET_MSG_ERR_NO_FREE_SPOTS         "Maximum number of connections has already been reached: <%d>."
@@ -81,6 +83,7 @@ typedef struct
 static int server_instances_num = 0;
 static SERVER_SOCKET_THREAD_DATA* server_instances_data = NULL;
 static SERVER_SOCKET_THREAD_COMMON_ARGS* server_instances_common_args = NULL;
+MTX_GRD_CREATE(mtx_thread_array);
 
 /***********************************/
 
@@ -133,9 +136,15 @@ static int SocketStateClose(int client_socket)
 }
 
 static int SocketThreadDataClean(int client_socket)
-{
+{ 
     // Iterate through SERVER_SOCKET_THREAD_DATA looking for a thread which client socket value matches the current one,
     // erase all related data afterwards.
+
+    MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
+
+    if(!p_mtx_thread_array)
+        return SERVER_SOCKET_MTX_LOCK_FAILURE;
+
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].thread_args.client_socket == client_socket)
         {
@@ -212,6 +221,11 @@ static void* ServerSocketThreadRoutine(void* args)
 
 static void SocketFreeThreadsData()
 {
+    MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
+
+    if(!p_mtx_thread_array)
+        return;
+
     if(server_instances_common_args)
     {
         free(server_instances_common_args);
@@ -232,6 +246,11 @@ static int SocketKillAllThreads()
 
     if(server_instances_data == NULL)
         return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
+
+    MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
+    
+    if(!p_mtx_thread_array)
+        return SERVER_SOCKET_MTX_LOCK_FAILURE;
 
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
@@ -274,6 +293,8 @@ int SocketSetupThreads(int max_conn_num, bool secure, bool non_blocking, int (*i
     server_instances_common_args->non_blocking = non_blocking;
     server_instances_common_args->interact_fn = interact_fn;
 
+    MTX_GRD_INIT(&mtx_thread_array);
+
     if(server_instances_data == NULL || server_instances_common_args == NULL)
         return SERVER_SOCKET_THREADS_ALLOCATION_FAILURE;
     
@@ -282,6 +303,11 @@ int SocketSetupThreads(int max_conn_num, bool secure, bool non_blocking, int (*i
 
 int SocketLaunchServerInstance(int client_socket)
 {
+    MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
+
+    if(!p_mtx_thread_array)
+        return SERVER_SOCKET_MTX_LOCK_FAILURE;
+
     // Look for a free spot. If there's not any free spot, return FAILURE. Otherwise, launch thread and mark it as "running".
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
     {
