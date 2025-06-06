@@ -14,6 +14,27 @@
 
 /*************************************/
 
+/***********************************/
+/******** Define statements ********/
+/***********************************/
+
+#define SERVER_SOCKET_MSG_WATING_INCOMING_CONN  "Waiting for an incoming connection to happen."
+#define SERVER_SOCKET_MSG_CLIENT_ACCEPTED       "Connection accepted. Client's IP address: <%s>"
+#define SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS  "Error while getting socket flags."
+#define SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS  "Error while setting O_NONBLOCK flag."
+
+/***********************************/
+
+/*************************************/
+/**** Private function prototypes ****/
+/*************************************/
+
+static struct sockaddr_in PrepareForBinding(sa_family_t address_family  ,
+                                            in_addr_t allowed_IPs       ,
+                                            uint16_t listen_port        );
+
+/*************************************/
+
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
@@ -52,13 +73,13 @@ int SocketOptions(  int             socket_desc     ,
                     unsigned long   tx_timeout_secs ,
                     unsigned long   tx_timeout_usecs)
 {
-    int socket_options;
+    int socket_options = 0;
 
     int reuse_address_int   = reuse_address == true ? 1 : 0;
     int reuse_port_int      = reuse_port    == true ? 1 : 0;
 
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address_int, sizeof(reuse_address_int));
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port_int   , sizeof(reuse_port_int   ));
+    socket_options |= setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR , &reuse_address_int, sizeof(reuse_address_int));
+    socket_options |= setsockopt(socket_desc, SOL_SOCKET, SO_REUSEPORT , &reuse_port_int   , sizeof(reuse_port_int   ));
 
     // The ones below are not meant to be used by now. These options are related to keep-alive mechanism.
     // socket_options = setsockopt(socket_desc, SOL_TCP   , TCP_KEEPIDLE , &keep_idle    , sizeof(keep_idle        ));
@@ -80,8 +101,8 @@ int SocketOptions(  int             socket_desc     ,
     };
     socklen_t set_tx_timeout_len = sizeof(set_tx_timeout);
 
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_rx_timeout, set_rx_timeout_len);
-    socket_options = setsockopt(socket_desc, SOL_SOCKET, SO_SNDTIMEO, &set_tx_timeout, set_tx_timeout_len);
+    socket_options |= setsockopt(socket_desc, SOL_SOCKET, SO_RCVTIMEO, &set_rx_timeout, set_rx_timeout_len);
+    socket_options |= setsockopt(socket_desc, SOL_SOCKET, SO_SNDTIMEO, &set_tx_timeout, set_tx_timeout_len);
 
     return socket_options;
 }
@@ -91,7 +112,7 @@ int SocketOptions(  int             socket_desc     ,
 /// @param allowed_IPs Use INADDR_ANY to allow any IP, specify it otherwise.
 /// @param listen_port The port the server is going to be later listening to.
 /// @return A struct which contains all the parameters related to a socket descriptor. 
-struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allowed_IPs, uint16_t listen_port)
+static struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allowed_IPs, uint16_t listen_port)
 {
     // Prepare the sockaddr_in structure for the binding process.
     struct sockaddr_in server;
@@ -105,15 +126,18 @@ struct sockaddr_in PrepareForBinding(sa_family_t address_family, in_addr_t allow
 
 /// @brief Binds socket to previously specified address and port.
 /// @param socket_desc Socket descriptor.
-/// @param server Previously defined server parameters struct.
+/// @param address_family Address family the server is going to work with.
+/// @param allowed_IPs Use INADDR_ANY to allow any IP, specify it otherwise.
+/// @param listen_port The port the server is going to be later listening to.
 /// @return < 0 if the binding failed.
-int BindSocket(int socket_desc, struct sockaddr_in server)
+int BindSocket(int socket_desc, uint16_t listen_port, sa_family_t address_family, in_addr_t allowed_IPs)
 {
+    struct sockaddr_in server = PrepareForBinding(address_family, allowed_IPs, listen_port);
+
     // Bind: attach the socket descriptor to a particular IP and port.
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
-    int bind_socket = bind(socket_desc, (struct sockaddr*)&server, file_desc_len);
 
-    return bind_socket;
+    return bind(socket_desc, (struct sockaddr*)&server, file_desc_len);
 }
 
 /// @brief Marks current socket as listener (server).
@@ -122,9 +146,7 @@ int BindSocket(int socket_desc, struct sockaddr_in server)
 /// @return < 0 if listening failed.
 int SocketListen(int socket_desc, int connections_number)
 {
-    int socket_listen = listen(socket_desc, connections_number);
-
-    return socket_listen;
+    return listen(socket_desc, connections_number);
 }
 
 /// @brief Sets non-blocking flag to the target socket.
@@ -136,7 +158,7 @@ int SocketSetNonBlocking(int socket_fd)
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if(flags < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -144,7 +166,7 @@ int SocketSetNonBlocking(int socket_fd)
     flags |= O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -160,7 +182,7 @@ int SocketUnsetNonBlocking(int socket_fd)
     int flags = fcntl(socket_fd, F_GETFL, 0);
     if(flags < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_GET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -168,7 +190,7 @@ int SocketUnsetNonBlocking(int socket_fd)
     flags &= ~O_NONBLOCK;
     if(fcntl(socket_fd, F_SETFL, flags) < 0)
     {
-        LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_SET_SOCKET_FLAGS);
         return flags;
     }
 
@@ -185,7 +207,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
     struct sockaddr_in client;
     socklen_t file_desc_len = (socklen_t)sizeof(struct sockaddr_in);
 
-    // LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
+    SVRTY_LOG_INF(SERVER_SOCKET_MSG_WATING_INCOMING_CONN);
 
     int client_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)&file_desc_len);
 
@@ -200,7 +222,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
     }
 
     if(client_socket >= 0)
-        LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_CLIENT_ACCEPTED, inet_ntoa(client.sin_addr));
 
     return client_socket;
 }
@@ -210,10 +232,7 @@ int SocketAccept(int socket_desc, bool non_blocking)
 /// @return < 0 if close failed.
 int CloseSocket(int client_socket)
 {
-    // Close the socket.
-    int close_socket = close(client_socket);
-
-    return close_socket;
+    return close(client_socket);
 }
 
 /*************************************/

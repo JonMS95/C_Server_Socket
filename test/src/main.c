@@ -13,6 +13,9 @@
 /********** Private constants **********/
 /***************************************/
 
+#define SERVER_SOCKET_TEST_LOG_BUFFER_SIZE  10000
+#define SERVER_SOCKET_TEST_LOG_INIT_MASK    0xFF
+
 /************ Port settings ************/
 
 #define PORT_OPT_CHAR                       'r'
@@ -114,14 +117,17 @@
 
 /***************************************/
 
+/// @brief Constructor function. Inits logs.
+__attribute__((constructor)) static void TestServerSocketLoad(void)
+{
+    SeverityLogInitWithMask(SERVER_SOCKET_TEST_LOG_BUFFER_SIZE, SERVER_SOCKET_TEST_LOG_INIT_MASK);
+}
+
 /*
 @brief Main function. Program's entry point.
 */
 int main(int argc, char** argv)
 {
-    SetSeverityLogMask(SVRTY_LOG_MASK_ALL);
-    SetSeverityLogPrintTimeStatus(true);
-
     int server_port             ;
     int max_clients_num         ;
     bool concurrency_enabled    ;
@@ -229,11 +235,11 @@ int main(int argc, char** argv)
     int parse_arguments = ParseOptions(argc, argv);
     if(parse_arguments < 0)
     {
-        LOG_ERR("Arguments parsing failed!");
+        SVRTY_LOG_ERR("Arguments parsing failed!");
         return parse_arguments;
     }
 
-    LOG_INF("Arguments successfully parsed!");
+    SVRTY_LOG_INF("Arguments successfully parsed!");
 
     ServerSocketRun(server_port         ,
                     max_clients_num     ,
@@ -249,6 +255,12 @@ int main(int argc, char** argv)
                     path_cert           ,
                     path_pkey           ,
                     NULL                );
+
+    if(path_cert != NULL)
+        free(path_cert);
+
+    if(path_pkey != NULL)
+        free(path_pkey);
 
     return 0;
 }

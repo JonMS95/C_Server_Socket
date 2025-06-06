@@ -1,9 +1,31 @@
+/************************************/
+/******** Include statements ********/
+/************************************/
+
 #include <arpa/inet.h>      // sockaddr_in, inet_addr
+#include <stdlib.h>         // EXIT_FAILURE
 #include <unistd.h>
-#include "ServerSocketHelperFunctions.h"
 #include "ServerSocketSSL.h"
 #include "SeverityLog_api.h"
 #include "ServerSocket_api.h"
+
+/************************************/
+
+/***********************************/
+/******** Define statements ********/
+/***********************************/
+
+#define getName(var)  #var
+
+#define SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_RX_BUFFER_SIZE    "Could not read from buffer due to insufficient RX buffer size."
+#define SERVER_SOCKET_HELPER_MSG_RX_BUFFER_NAME                 "RX buffer variable name: <%s>, declared size: <%d>."
+#define SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_TX_BUFFER_SIZE    "Could not write to buffer due to insufficient TX buffer size."
+#define SERVER_SOCKET_HELPER_MSG_TX_BUFFER_NAME                 "TX buffer variable name: <%s>, declared size: <%d>."
+
+#define SERVER_SOCKET_HELPER_ERR_INSUFFICIENT_RX_BUFFER_SIZE    -1
+#define SERVER_SOCKET_HELPER_ERR_INSUFFICIENT_TX_BUFFER_SIZE    -2
+
+/***********************************/
 
 /// @brief Get client's IP address.
 /// @param client_socket Client socket.
@@ -27,15 +49,15 @@ int ServerSocketRead(int client_socket, char* rx_buffer, unsigned long rx_buffer
 
     if(rx_buffer_size == 0)
     {
-        LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_RX_BUFFER_SIZE);
-        LOG_DBG(SERVER_SOCKET_HELPER_MSG_RX_BUFFER_NAME, getName(rx_buffer), rx_buffer_size);
+        SVRTY_LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_RX_BUFFER_SIZE);
+        SVRTY_LOG_DBG(SERVER_SOCKET_HELPER_MSG_RX_BUFFER_NAME, getName(rx_buffer), rx_buffer_size);
         exit(EXIT_FAILURE);
     }
 
     if(!ServerSocketIsSecure())
         read_from_socket = read(client_socket, rx_buffer, rx_buffer_size);
     else
-        read_from_socket = SSL_read(*(ServerSocketGetPointerToSSLData()), rx_buffer, rx_buffer_size);
+        read_from_socket = ServerSocketSSLRead(rx_buffer, rx_buffer_size);
     
     return read_from_socket;
 }
@@ -51,15 +73,15 @@ int ServerSocketWrite(int client_socket, const char* tx_buffer, unsigned long tx
 
     if(tx_buffer_size == 0)
     {
-        LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_TX_BUFFER_SIZE);
-        LOG_DBG(SERVER_SOCKET_HELPER_MSG_TX_BUFFER_NAME, getName(tx_buffer), tx_buffer_size);
+        SVRTY_LOG_ERR(SERVER_SOCKET_HELPER_MSG_INSUFFICIENT_TX_BUFFER_SIZE);
+        SVRTY_LOG_DBG(SERVER_SOCKET_HELPER_MSG_TX_BUFFER_NAME, getName(tx_buffer), tx_buffer_size);
         exit(EXIT_FAILURE);
     }
 
     if(!ServerSocketIsSecure())
         write_to_socket = write(client_socket, tx_buffer, tx_buffer_size);
     else
-        write_to_socket = SSL_write(*(ServerSocketGetPointerToSSLData()), tx_buffer, tx_buffer_size);
+        write_to_socket = ServerSocketSSLWrite(tx_buffer, tx_buffer_size);
     
     return write_to_socket;
 }

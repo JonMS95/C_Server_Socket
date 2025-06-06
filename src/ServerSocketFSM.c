@@ -3,35 +3,99 @@
 /************************************/
 
 #include <stdlib.h>         // malloc, calloc, realloc, free.
-#include <unistd.h>         // Fork if concurrency is accepted.
+#include <unistd.h>         // Write, sleep.
 #include <string.h>         // strlen
 #include <signal.h>         // Shutdown signal.
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include "ServerSocketUse.h"
-#include "ServerSocketFSM.h"
-#include "ServerSocketConcurrency.h"
+#include "ServerSocketManageThreads.h"
 #include "ServerSocketSSL.h"
 #include "ServerSocketDefaultInteract.h"
+#include "ServerSocket_api.h"
 #include "SeverityLog_api.h"
 
 /************************************/
+
+/***********************************/
+/******** Define statements ********/
+/***********************************/
+
+#define SERVER_SOCKET_SET_SIGINT_ERR            "Error while trying to set up SIGINT handler."
+#define SERVER_SOCKET_MSG_SIGINT_RECEIVED       "Received Ctrl+C (SIGINT). Cleaning up and exiting."
+#define SERVER_SOCKET_MSG_CREATION_NOK          "Socket file descriptor creation failed."
+#define SERVER_SOCKET_MSG_CREATION_OK           "Socket file descriptor created."
+#define SERVER_SOCKET_MSG_SETUP_SSL_NOK         "SSL setup failed."
+#define SERVER_SOCKET_MSG_SETUP_SSL_OK          "SSL setup succeeded."
+#define SERVER_SOCKET_MSG_SET_OPTIONS_NOK       "Failed to set socket options."
+#define SERVER_SOCKET_MSG_SET_OPTIONS_OK        "Successfully set socket options."
+#define SERVER_SOCKET_MSG_BIND_NOK              "Socket binding failed."
+#define SERVER_SOCKET_MSG_BIND_OK               "Socket file descriptor binded."
+#define SERVER_SOCKET_MSG_LISTEN_NOK            "Socket listen failed."
+#define SERVER_SOCKET_MSG_LISTEN_OK             "Socket listen succeeded."
+#define SERVER_SOCKET_MSG_ACCEPT_NOK            "Accept failed."
+#define SERVER_SOCKET_MSG_ACCEPT_OK             "Accept succeeded."
+#define SERVER_SOCKET_MANAGE_THREADS_NOK        "Server instance creation failed."
+#define SERVER_SOCKET_MANAGE_THREADS_OK         "Server instance creation succeeded."
+#define SERVER_SOCKET_MSG_REFUSE                "Connection refused by the server. Closing socket in %d seconds."
+
+#define SERVER_SOCKET_LEN_MSG_REFUSE            100
+
+#define SERVER_SOCKET_SECONDS_AFTER_REFUSAL     0
+
+/************************************/
+
+/**********************************/
+/******** Type definitions ********/
+/**********************************/
+
+typedef enum
+{
+    CREATE_FD = 0       ,
+    SETUP_SSL           ,
+    OPTIONS             ,
+    BIND                ,
+    LISTEN              ,
+    ACCEPT              ,
+    MANAGE_THREADS      ,
+    REFUSE              ,
+    CLOSE               ,
+
+} SOCKET_FSM;
+
+/**********************************/
 
 /***********************************/
 /******** Private variables ********/
 /***********************************/
 
 static volatile int ctrlCPressed        = 0;
-static pid_t*       server_instances    = NULL;
-
-/// @brief Pointer to a function which is meant to interact with the client.
-/// @param client_socket Client socket.
-/// @param secure True if TLS security is wanted, false otherwise.
-/// @param ssl SSL data.
-/// @return < 0 if any error happened, > 0 if want to interact again, 0 otherwise.
-static int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn;
 
 /***********************************/
+
+/*************************************/
+/**** Private function prototypes ****/
+/*************************************/
+
+static void SocketFreeResources(void);
+static void SocketSIGINTHandler(int signum);
+static int SocketStateCreate(void);
+static int SocketStateOptions(  int             socket_desc     ,
+                                bool            reuse_address   ,
+                                bool            reuse_port      ,
+                                unsigned long   rx_timeout_secs ,
+                                unsigned long   rx_timeout_usecs,
+                                unsigned long   tx_timeout_secs ,
+                                unsigned long   tx_timeout_usecs);
+static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path);
+static int SocketStateBind( int socket_desc             ,
+                            int server_port             ,
+                            sa_family_t address_family  ,
+                            in_addr_t allowed_IPs       );
+static int SocketStateListen(int socket_desc, int max_conn_num);
+static int SocketStateAccept(int socket_desc, bool non_blocking);
+static int SocketStateManageThreads(int client_socket);
+static int SocketStateRefuse(int client_socket);
+
+/*************************************/
 
 /*************************************/
 /******* Function definitions ********/
@@ -40,40 +104,17 @@ static int (*SocketStateInteract)(int client_socket)  = &SocketDefaultInteractFn
 /// @brief Frees previously heap allocated memory before exiting the program.
 static void SocketFreeResources(void)
 {
-    if(server_instances != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_PID, getpid());
-        free(server_instances);
-        server_instances = NULL;
-    }
-
-    if(*(ServerSocketGetPointerToSSLData()) != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
-        SSL_free(*(ServerSocketGetPointerToSSLData()));
-    }
-
-    if(*(ServerSocketGetPointerToSSLContext()) != NULL)
-    {
-        LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
-        SSL_CTX_free(*(ServerSocketGetPointerToSSLContext()));
-    }
-
-    ERR_free_strings();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
-    ERR_free_strings();
-    CONF_modules_unload(1);
-    CONF_modules_free();
-    EVP_cleanup();
-    CRYPTO_cleanup_all_ex_data();
+    SocketFreeThreadsResources();
+    SocketFreeSSLResources();
 }
 
 /// @brief Handle SIGINT signal (Ctrl+C).
 /// @param signum Signal number (SIGINT by default).
 static void SocketSIGINTHandler(int signum)
 {
-    LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
+    // NEW VERSION (THREADS): apart from freeing all resources, all threads must be terminated.
+    // For such thing to be possible, threads should be cancellable (deferred).
+    SVRTY_LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
     ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
 
     SocketFreeResources();
@@ -88,9 +129,9 @@ static int SocketStateCreate(void)
     int socket_desc = CreateSocketDescriptor(AF_INET, SOCK_STREAM, IPPROTO_IP);
 
     if(socket_desc < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_CREATION_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_CREATION_OK);
 
     return socket_desc;
 }
@@ -115,9 +156,9 @@ static int SocketStateOptions(  int             socket_desc     ,
     int socket_options = SocketOptions(socket_desc, reuse_address, reuse_port, rx_timeout_secs, rx_timeout_usecs, tx_timeout_secs, tx_timeout_usecs);
 
     if(socket_options < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SET_OPTIONS_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_SET_OPTIONS_OK);
 
     return socket_options;
 }
@@ -130,28 +171,30 @@ static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
 
-    if(server_socket_SSL_setup != SERVER_SOCKET_SETUP_SSL_SUCCESS)
-        LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
+    if(server_socket_SSL_setup < 0)
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SETUP_SSL_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_SETUP_SSL_OK);
 
-    return (server_socket_SSL_setup == SERVER_SOCKET_SETUP_SSL_SUCCESS ? 0 : -1);
+    return server_socket_SSL_setup;
 }
 
 /// @brief Bind socket to an IP address and port.
 /// @param socket_desc Socket file descriptor.
 /// @param server_port The port which is going to be used to listen to incoming connections.
+/// @param address_family Address family the server is going to work with.
+/// @param allowed_IPs Use INADDR_ANY to allow any IP, specify it otherwise.
 /// @return < 0 if it failed to bind.
-static int SocketStateBind(int socket_desc, int server_port)
+static int SocketStateBind(int socket_desc, int server_port, sa_family_t address_family, in_addr_t allowed_IPs)
 {
-    struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
+    // struct sockaddr_in server = PrepareForBinding(AF_INET, INADDR_ANY, server_port);
 
-    int bind_socket = BindSocket(socket_desc, server);
+    int bind_socket = BindSocket(socket_desc, server_port, address_family, allowed_IPs);
 
     if(bind_socket < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_BIND_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_BIND_OK);
     
     return bind_socket;
 }
@@ -165,9 +208,9 @@ static int SocketStateListen(int socket_desc, int max_conn_num)
     int listen = SocketListen(socket_desc, max_conn_num);
 
     if(listen < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_LISTEN_NOK);
     else
-        LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_LISTEN_OK);
     
     return listen;
 }
@@ -179,59 +222,23 @@ static int SocketStateListen(int socket_desc, int max_conn_num)
 static int SocketStateAccept(int socket_desc, bool non_blocking)
 {
     int client_socket = SocketAccept(socket_desc, non_blocking);
-
-    // if(client_socket < 0)
-    //     LOG_ERR(SERVER_SOCKET_MSG_ACCEPT_NOK);
-    // else
-    //     LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     
     if(client_socket >= 0)
-        LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_ACCEPT_OK);
     
     return client_socket;
 }
 
-/// @brief Manage concurrent server instances.
-/// @param client_socket Client socket descriptor.
-/// @param server_instance_processes Array which contains PIDs of each running server socket instance.
-/// @param max_conn_num Maximum amount of allowed clients (== server socket instances).
-/// @return < 0 if new instance could not be created. Otherwise, 0 if current process is parent, 1 if it is child server isntance.
-static int SocketStateManageConcurrency(int client_socket, pid_t* server_instance_processes, int max_conn_num)
+static int SocketStateManageThreads(int client_socket)
 {
-    // Check if any server socket instance may be created.
-    int possible_new_instance = ServerSocketPossibleNewInstance(server_instance_processes, max_conn_num);
-
-    if(possible_new_instance < 0)
-    {
-        LOG_WNG(SERVER_SOCKET_MSG_MAX_CONNS_REACHED);
-        return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
-    }
-
-    int retfork = fork();
-
-    if(retfork < 0)
-    {
-        LOG_ERR(SERVER_SOCKET_MSG_CANNOT_FORK);
-        return SERVER_SOCKET_CONC_ERR_CANNOT_FORK;
-    }
-
-    if(retfork > 0)
-    {
-        int new_server_instance_index = ServerSocketNewInstanceSpotIndex(server_instance_processes, max_conn_num);
-
-        if(new_server_instance_index < 0)
-        {
-            return SERVER_SOCKET_CONC_ERR_REFUSE_CONN;
-        }
-
-        server_instance_processes[new_server_instance_index] = retfork;
-
-        LOG_DBG(SERVER_SOCKET_MSG_NEW_PROCESS, retfork);
-
-        return SERVER_SOCKET_CONC_SUCCESS_PARENT;
-    }
-
-    return SERVER_SOCKET_CONC_SUCCESS_CHILD;
+    int new_server_instance = SocketLaunchServerInstance(client_socket);
+    
+    if(new_server_instance < 0)
+        SVRTY_LOG_ERR(SERVER_SOCKET_MANAGE_THREADS_NOK);
+    else
+        SVRTY_LOG_INF(SERVER_SOCKET_MANAGE_THREADS_OK);
+    
+    return new_server_instance;
 }
 
 /// @brief Refuse incoming connection. To be called when there are no free spots for a new server instance.
@@ -248,40 +255,9 @@ static int SocketStateRefuse(int client_socket)
 
     sleep(SERVER_SOCKET_SECONDS_AFTER_REFUSAL);
 
-    int close_socket = SocketStateClose(client_socket);
+    int close_socket = CloseSocket(client_socket);
 
     return close_socket;
-}
-
-/// @brief Perform SSL handshake if needed.
-/// @param client_socket Client socket instance.
-/// @param bool non_blocking Tells whether or not is the socket non-blocking.
-/// @return 0 if handhsake was successfully performed, < 0 otherwise.
-static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
-{
-    int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
-
-    if(ssl_handshake != SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS)
-        LOG_ERR(SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK);
-    else
-        LOG_INF(SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK);
-
-    return (ssl_handshake == SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS ? 0 : -1);
-}
-
-/// @brief Close socket.
-/// @param client_socket Socket file descriptor.
-/// @return < 0 if it failed to close the socket.
-static int SocketStateClose(int client_socket)
-{
-    int close = CloseSocket(client_socket);
-    
-    if(close < 0)
-        LOG_ERR(SERVER_SOCKET_MSG_CLOSE_NOK, client_socket);
-    else
-        LOG_INF(SERVER_SOCKET_MSG_CLOSE_OK, client_socket);
-
-    return close;    
 }
 
 /// @brief Runs server socket.
@@ -318,14 +294,19 @@ int ServerSocketRun(int server_port                                     ,
     SOCKET_FSM socket_fsm = CREATE_FD;
     int socket_desc;
     int client_socket;
-    server_instances = (pid_t*)calloc(max_conn_num, sizeof(pid_t));
+    int (*SocketStateInteract)(int client_socket)  = SocketDefaultInteractFn;
 
     if(CustomSocketStateInteract != NULL)
         SocketStateInteract = CustomSocketStateInteract;
 
+    int setup_threads = SocketSetupThreads(max_conn_num, secure, non_blocking, SocketStateInteract);
+    
+    if(setup_threads < 0)
+        return setup_threads;
+
     if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
     {
-        LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
+        SVRTY_LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
         exit(EXIT_FAILURE);
     }
 
@@ -370,7 +351,7 @@ int ServerSocketRun(int server_port                                     ,
             // Bind socket descriptor to a specified port
             case BIND:
             {
-                if(SocketStateBind(socket_desc, server_port) >= 0)
+                if(SocketStateBind(socket_desc, server_port, AF_INET, INADDR_ANY) >= 0)
                     socket_fsm = LISTEN;
             }
             break;
@@ -392,46 +373,20 @@ int ServerSocketRun(int server_port                                     ,
                 client_socket = SocketStateAccept(socket_desc, non_blocking);
 
                 if(client_socket >= 0)
-                {
-                    if(!(concurrent && max_conn_num > 1))
-                    {
-                        socket_fsm = SSL_HANDSHAKE;
-                        continue;
-                    }
-
-                    socket_fsm = MANAGE_CONCURRENCY;
-                }
+                    socket_fsm = MANAGE_THREADS;
             }
             break;
 
             // Clone the current process if necessary
-            case MANAGE_CONCURRENCY:
+            // Should manage threads instead of processes:
+            case MANAGE_THREADS:
             {
-                int manage_concurrency = SocketStateManageConcurrency(client_socket, server_instances, max_conn_num);
+                int manage_threads = SocketStateManageThreads(client_socket);
 
-                switch(manage_concurrency)
-                {
-                    case SERVER_SOCKET_CONC_ERR_REFUSE_CONN:
-                    {
-                        socket_fsm = REFUSE;
-                    }
-                    break;
-
-                    case SERVER_SOCKET_CONC_SUCCESS_PARENT:
-                    case SERVER_SOCKET_CONC_ERR_CANNOT_FORK:
-                    {
-                        socket_fsm = ACCEPT;
-                    }
-                    break;
-
-                    case SERVER_SOCKET_CONC_SUCCESS_CHILD:
-                    {
-                        socket_fsm = SSL_HANDSHAKE;
-                    }
-
-                    default:
-                    break;
-                }
+                if(manage_threads >= 0)
+                    socket_fsm = ACCEPT;
+                else
+                    socket_fsm = REFUSE;
             }
             break;
 
@@ -441,46 +396,6 @@ int ServerSocketRun(int server_port                                     ,
                 SocketStateRefuse(client_socket);
 
                 socket_fsm = ACCEPT;
-            }
-            break;
-
-            // Perform SSL / TLS handshake to make the connection secure
-            case SSL_HANDSHAKE:
-            {
-                if(!secure)
-                {
-                    socket_fsm = INTERACT;
-                    continue;
-                }
-
-                if(SocketStateSSLHandshake(client_socket, non_blocking) >= 0)
-                    socket_fsm = INTERACT;
-                else
-                    socket_fsm = ACCEPT;
-            }
-            break;
-
-            // Interact with client
-            case INTERACT:
-            {
-                if(SocketStateInteract(client_socket) > 0)
-                    socket_fsm = INTERACT;
-                else
-                    socket_fsm = CLOSE_CLIENT;
-            }
-            break;
-
-            // Close client socket instance if required
-            case CLOSE_CLIENT:
-            {
-                SocketStateClose(client_socket);
-
-                // If server allows multiple instances, then this point may only be reached by a child process, so socket must be closed.
-                if(concurrent && max_conn_num > 1)
-                    socket_fsm = CLOSE;
-                else
-                    socket_fsm = ACCEPT;
-
             }
             break;
 

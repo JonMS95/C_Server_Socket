@@ -17,12 +17,22 @@
 #define SERVER_SOCKET_LEN_RX_BUFFER             256     // RX buffer size.
 #define SERVER_SOCKET_LEN_TX_BUFFER             256     // TX buffer size.
 
-#define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>"
-#define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>"
+#define SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT "Data read from client: <%s>."
+#define SERVER_SOCKET_MSG_GREETING              "Hello client! Your IP address is: <%s>."
 #define SERVER_SOCKET_MSG_CLIENT_DISCONNECTED   "Client with IP <%s> disconnected."
 
 /************************************/
 
+/*************************************/
+/**** Private function prototypes ****/
+/*************************************/
+
+static void ServerSocketShowReadData(char* rx_buffer);
+
+/*************************************/
+
+/// @brief Displays read data.
+/// @param rx_buffer Reception buffer.
 static void ServerSocketShowReadData(char* rx_buffer)
 {
     if(strlen(rx_buffer) > 0 && rx_buffer[strlen(rx_buffer) - 1] == '\n')
@@ -33,14 +43,12 @@ static void ServerSocketShowReadData(char* rx_buffer)
 
     if(strlen(rx_buffer) > 0)
     {
-        LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
+        SVRTY_LOG_INF(SERVER_SOCKET_MSG_DATA_READ_FROM_CLIENT, rx_buffer);
     }
 }
 
 /// @brief Reads from client, then sends a response.
 /// @param client_socket Client socket.
-/// @param secure True if TLS security is wanted, false otherwise.
-/// @param ssl SSL data.
 /// @return < 0 if any error happened, 0 otherwise.
 int SocketDefaultInteractFn(int client_socket)
 {
@@ -61,7 +69,7 @@ int SocketDefaultInteractFn(int client_socket)
         // Check if the client is still connected, or if no data has been received.
         if(read_from_socket == 0)
         {
-            LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
+            SVRTY_LOG_WNG(SERVER_SOCKET_MSG_CLIENT_DISCONNECTED, client_IP_addr);
             break;
         }
 
