@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0] 07-06-2025
+### Added
+* Thread usage: from now on, POSIX threads are going to be used to run multiple instances instead of processes.
+
+### Changed
+* New directory/file naming convention is used now.
+* Updated dependencies to their latest available versions.
+* Modified Makefile in such way that .so libraries can be linked in a given order now.
+
+### Fixed
+* Each server socket instance is closed after service to a given client ends (in prior versions, sockets were never closed, leading them to run indefinitely).
+
+
 ## [1.3] 02-08-2024
 ### Added
 * API header file now includes some more helpful functions to be applied once the socket has started running. The full API functions list goes like this:
