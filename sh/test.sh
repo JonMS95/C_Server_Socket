@@ -15,12 +15,17 @@ CERTIFICATE_PATH="${CERTIFICATE_TEST_DIR}/certificate.crt"
 PKEY_PATH="${CERTIFICATE_TEST_DIR}/private.key"
 CERT_TEST_SCRIPT_PATH="$(realpath $(dirname $(realpath ${0}))/create_self_signed_cert.sh)"
 
+CERT_CREATION_MSG="Creating testing self-signed certificate ..."
+
 export LD_LIBRARY_PATH=${PATH_TO_TEST_DEP_DYN_LIBS}
 
 # Erase the directory and its content if it exists, then create both the certificate and the private key again.
 if [ ! -d ${CERTIFICATE_TEST_DIR} ] || [ ! -f ${CERTIFICATE_PATH} ] || [ ! -f ${PKEY_PATH} ]
 then
     rm -rf ${CERTIFICATE_TEST_DIR}
+
+    echo "${CERT_CREATION_MSG}"
+
     $(${CERT_TEST_SCRIPT_PATH})
 fi
 
