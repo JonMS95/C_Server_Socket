@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 * Each server socket instance is closed after service to a given client ends (in prior versions, sockets were never closed, leading them to run indefinitely).
+* Re-organized many submodules (instance manager, SSL consumer files).
 
 
 ## [1.3] 02-08-2024
