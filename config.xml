@@ -2,8 +2,8 @@
 <config>
     <Project_data
         version_major="2"
-        version_minor="0"
-        version_mode="RELEASE"
+        version_minor="1"
+        version_mode="DEBUG"
         URL="https://github.com/JonMS95/C_Server_Socket"
         type="library"
         language="C"
@@ -40,17 +40,24 @@
     <deps Dest="deps">
         <C_Severity_Log
             version_major="2"
-            version_minor="2"
-            version_mode="RELEASE"
-            local_path="~/C_Severity_Log"
+            version_minor="3"
+            version_mode="DEBUG"
+            local_path="~/Desktop/scripts/C/C_Severity_Log"
             URL="https://github.com/JonMS95/C_Severity_Log"
         />
         <C_Mutex_Guard
             version_major="1"
-            version_minor="0"
-            version_mode="RELEASE"
-            local_path="~/C_Mutex_Guard"
+            version_minor="1"
+            version_mode="DEBUG"
+            local_path="~/Desktop/scripts/C/C_Mutex_Guard"
             URL="https://github.com/JonMS95/C_Mutex_Guard"
+        />
+        <C_Signal_Handler
+            version_major="1"
+            version_minor="0"
+            version_mode="DEBUG"
+            local_path="~/Desktop/scripts/C/C_Signal_Handler"
+            URL="https://github.com/JonMS95/C_Signal_Handler"
         />
         <OpenSSL
                 type="APT_package"
@@ -62,6 +69,11 @@
             lib_name="crypto"
             package="libssl-dev"
         />
+        <Posix_Threads
+            type="APT_package"
+            lib_name="pthread"
+            package="libc6-dev"
+        />
     </deps>
 
     <!-- Tests -->
@@ -70,31 +82,38 @@
         <deps Dest="test/deps" Sorted="Yes">
             <C_Arg_Parse
                 version_major="2"
-                version_minor="0"
-                version_mode="RELEASE"
-                local_path="~/C_Arg_Parse"
+                version_minor="1"
+                version_mode="DEBUG"
+                local_path="~/Desktop/scripts/C/C_Arg_Parse"
                 URL="https://github.com/JonMS95/C_Arg_Parse"
             />
             <C_Server_Socket
                 version_major="2"
-                version_minor="0"
-                version_mode="RELEASE"
+                version_minor="1"
+                version_mode="DEBUG"
                 local_path="."
                 URL="https://github.com/JonMS95/C_Server_Socket"
             />
             <C_Severity_Log
                 version_major="2"
-                version_minor="2"
-                version_mode="RELEASE"
-                local_path="~/C_Severity_Log"
+                version_minor="3"
+                version_mode="DEBUG"
+                local_path="~/Desktop/scripts/C/C_Severity_Log"
                 URL="https://github.com/JonMS95/C_Severity_Log"
             />
             <C_Mutex_Guard
                 version_major="1"
-                version_minor="0"
-                version_mode="RELEASE"
-                local_path="~/C_Mutex_Guard"
+                version_minor="1"
+                version_mode="DEBUG"
+                local_path="~/Desktop/scripts/C/C_Mutex_Guard"
                 URL="https://github.com/JonMS95/C_Mutex_Guard"
+            />
+            <C_Signal_Handler
+                version_major="1"
+                version_minor="0"
+                version_mode="DEBUG"
+                local_path="~/Desktop/scripts/C/C_Signal_Handler"
+                URL="https://github.com/JonMS95/C_Signal_Handler"
             />
             <OpenSSL
                 type="APT_package"
@@ -105,6 +124,11 @@
                 type="APT_package"
                 lib_name="crypto"
                 package="libssl-dev"
+            />
+            <Posix_Threads
+                type="APT_package"
+                lib_name="pthread"
+                package="libc6-dev"
             />
         </deps>
     </test>
