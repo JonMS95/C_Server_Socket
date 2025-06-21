@@ -68,7 +68,8 @@ typedef enum
 /******** Private variables ********/
 /***********************************/
 
-static int resources_freed = false;
+static bool resources_freed = false;
+static bool server_active   = false;
 
 /***********************************/
 
@@ -117,6 +118,7 @@ static void SocketSignalHandler(const int signum)
         return;
 
     resources_freed = true;
+    server_active = false;
 
     SVRTY_LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
 
@@ -320,7 +322,9 @@ int ServerSocketRun(int server_port                                     ,
     if(SignalHandlerAddCallback(SocketSignalHandler, SIG_HDL_ALL_SIGNALS_MASK))
         SVRTY_LOG_DBG("Could not setup signal handler (%s)", SIG_HDL_GET_LAST_ERR_STR);
 
-    while(!ctrlCPressed)
+    server_active = true;
+
+    while(server_active)
     {
         switch (socket_fsm)
         {
@@ -336,7 +340,13 @@ int ServerSocketRun(int server_port                                     ,
             // Set general socket FD options (keepalive, heartbeat, ...)
             case OPTIONS:
             {
-                if(SocketStateOptions(socket_desc, reuse_address, reuse_port, rx_timeout_s, rx_timeout_us, tx_timeout_s, tx_timeout_us) >= 0)
+                if(SocketStateOptions(  socket_desc     ,
+                                        reuse_address   ,
+                                        reuse_port      ,
+                                        rx_timeout_s    ,
+                                        rx_timeout_us   ,
+                                        tx_timeout_s    ,
+                                        tx_timeout_us   ) >= 0)
                     socket_fsm = SETUP_SSL;
             }
             break;
