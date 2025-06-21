@@ -12,6 +12,7 @@
 #include "ServerSocketDefaultInteract.h"
 #include "ServerSocket_api.h"
 #include "SeverityLog_api.h"
+#include "SignalHandler_api.h"
 
 /************************************/
 
@@ -67,7 +68,7 @@ typedef enum
 /******** Private variables ********/
 /***********************************/
 
-static volatile int ctrlCPressed        = 0;
+static int resources_freed = false;
 
 /***********************************/
 
@@ -76,7 +77,7 @@ static volatile int ctrlCPressed        = 0;
 /*************************************/
 
 static void SocketFreeResources(void);
-static void SocketSIGINTHandler(int signum);
+static void SocketSignalHandler(int signum);
 static int SocketStateCreate(void);
 static int SocketStateOptions(  int             socket_desc     ,
                                 bool            reuse_address   ,
@@ -108,14 +109,16 @@ static void SocketFreeResources(void)
     SocketFreeSSLResources();
 }
 
-/// @brief Handle SIGINT signal (Ctrl+C).
-/// @param signum Signal number (SIGINT by default).
-static void SocketSIGINTHandler(int signum)
+/// @brief Handle incoming signals.
+/// @param signum Signal number.
+static void SocketSignalHandler(const int signum)
 {
-    // NEW VERSION (THREADS): apart from freeing all resources, all threads must be terminated.
-    // For such thing to be possible, threads should be cancellable (deferred).
+    if(resources_freed)
+        return;
+
+    resources_freed = true;
+
     SVRTY_LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
-    ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
 
     SocketFreeResources();
 
@@ -260,6 +263,16 @@ static int SocketStateRefuse(int client_socket)
     return close_socket;
 }
 
+static void __attribute__((constructor)) ServerSocketLoad(void)
+{
+    resources_freed = false;
+}
+
+static void __attribute__((destructor)) ServerSocketUnload(void)
+{
+    SocketFreeResources();
+}
+
 /// @brief Runs server socket.
 /// @param server_port Port server is meant to be listening to.
 /// @param max_conn_num Maximum number of connections.
@@ -304,11 +317,8 @@ int ServerSocketRun(int server_port                                     ,
     if(setup_threads < 0)
         return setup_threads;
 
-    if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
-    {
-        SVRTY_LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
-        exit(EXIT_FAILURE);
-    }
+    if(SignalHandlerAddCallback(SocketSignalHandler, SIG_HDL_ALL_SIGNALS_MASK))
+        SVRTY_LOG_DBG("Could not setup signal handler (%s)", SIG_HDL_GET_LAST_ERR_STR);
 
     while(!ctrlCPressed)
     {
