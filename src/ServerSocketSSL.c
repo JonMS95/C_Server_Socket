@@ -6,6 +6,8 @@
 #include <openssl/err.h>        // OpenSSL errors.
 #include "ServerSocketSSL.h"
 #include "ServerSocketUse.h"    // Set/Unset O_NONBLOCK flag.
+#include "ServerSocketSSL.h"
+#include "ServerSocketManageThreads.h"  // Get current thread's SSL object (if any).
 #include "SeverityLog_api.h"
 
 /************************************/
@@ -20,14 +22,18 @@
 #define SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX   "Cleaning up server SSL context."
 #define SERVER_SOCKET_MSG_CLEANING_UP_SSL       "Cleaning up server SSL data."
 
+#define SERVER_SOCKET_MSG_SSL_EQUAL_PATHS   "Path for certificate is the same as for private key."
+
 #define SERVER_SOCKET_SSL_HANDSHAKE_SUCCESS 0
 #define SERVER_SOCKET_SSL_HANDSHAKE_ERR     -1
 #define SERVER_SOCKET_SSL_ACCEPT_SUCCESS    1
 
 #define SERVER_SOCKET_SETUP_SSL_SUCCESS             0
+#define SERVER_SOCKET_SETUP_SSL_NULL_SSL            -1
 #define SERVER_SOCKET_SETUP_SSL_NULL_CTX            -2
 #define SERVER_SOCKET_SETUP_SSL_ERR_LOAD_CERT       -3
 #define SERVER_SOCKET_SETUP_SSL_ERR_LOAD_PRIV_KEY   -4
+#define SERVER_SOCKET_SETUP_SSL_EQUAL_PATHS         -5
 
 /************************************/
 
@@ -35,9 +41,8 @@
 /******** Private variables ********/
 /***********************************/
 
-static SSL_CTX*     ctx                 = NULL;
-static SSL*         ssl                 = NULL;
-static bool         is_secure           = false;
+static SSL_CTX* ctx         = NULL;
+static bool     is_secure   = false;
 
 /***********************************/
 
@@ -45,7 +50,6 @@ static bool         is_secure           = false;
 /**** Private function prototypes ****/
 /*************************************/
 
-static SSL** ServerSocketGetPointerToSSLData(void);
 static SSL_CTX** ServerSocketGetPointerToSSLContext(void);
 static void ServerSocketSetSecure(bool secure);
 
@@ -54,13 +58,6 @@ static void ServerSocketSetSecure(bool secure);
 /*************************************/
 /******* Function definitions ********/
 /*************************************/
-
-/// @brief Retrieves pointer to SSL pointer.
-/// @return Double pointer to ssl data variable.
-static SSL** ServerSocketGetPointerToSSLData(void)
-{
-    return &ssl;
-}
 
 /// @brief Retrieves pointer to SSL_CTX pointer.
 /// @return Double pointer to ssl context variable.
@@ -72,7 +69,7 @@ static SSL_CTX** ServerSocketGetPointerToSSLContext(void)
 
 /// @brief Sets security variable.
 /// @param secure Target security variable value.
-static void ServerSocketSetSecure(bool secure)
+static void ServerSocketSetSecure(const bool secure)
 {
     is_secure = secure;
 }
@@ -88,10 +85,16 @@ bool ServerSocketIsSecure(void)
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 1 if succeeded, < 1 if any error ocurred.
-int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path)
+int ServerSocketSSLSetup(const char* restrict cert_path, const char* restrict priv_key_path)
 {
     SVRTY_LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_CERT, cert_path);
     SVRTY_LOG_DBG(SERVER_SOCKET_MSG_PATH_TO_PRIV_KEY, priv_key_path);
+
+    if(cert_path == priv_key_path)
+    {
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_SSL_EQUAL_PATHS);
+        return SERVER_SOCKET_SETUP_SSL_EQUAL_PATHS;
+    }
 
     SSL_library_init();
     OpenSSL_add_all_algorithms();
@@ -129,18 +132,29 @@ int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path)
 /// @brief Perform SSL handshake if needed.
 /// @param client_socket Client socket instance.
 /// @param bool non_blocking Tells whether or not is the socket non-blocking.
+/// @param p_ssl Pointer to SSL object.
 /// @return 0 if handhsake was successfully performed, < 0 otherwise.
-int ServerSocketSSLHandshake(int client_socket, bool non_blocking)
+int ServerSocketSSLHandshake(const int client_socket, const bool non_blocking)
 {
-    *(ServerSocketGetPointerToSSLData()) = SSL_new(*(ServerSocketGetPointerToSSLContext()));
-    SSL_set_fd(*(ServerSocketGetPointerToSSLData()), client_socket);
+    SSL** restrict dp_ssl = SocketGetCurrentThreadSSLObj();
+    SSL* restrict p_ssl = NULL;
+    
+    if(!dp_ssl || !*dp_ssl)
+        return SERVER_SOCKET_SETUP_SSL_NULL_SSL;
+    
+    *dp_ssl = SSL_new(*(ServerSocketGetPointerToSSLContext()));
+
+    if(!*dp_ssl)
+        return SERVER_SOCKET_SETUP_SSL_NULL_SSL;
+
+    int set_ssl_fd = SSL_set_fd(*dp_ssl, client_socket);
 
     // Unset non-blocking feature by default, activate it again later if required.
     int unset_non_blocking = SocketUnsetNonBlocking(client_socket);
     if(unset_non_blocking < 0)
         return unset_non_blocking;
 
-    int ssl_accept = SSL_accept(*(ServerSocketGetPointerToSSLData()));
+    int ssl_accept = SSL_accept(*dp_ssl);
 
     if(ssl_accept <= 0)
         ERR_print_errors_fp(stderr);
@@ -160,33 +174,32 @@ int ServerSocketSSLHandshake(int client_socket, bool non_blocking)
 /// @param rx_buffer Target buffer to read from.
 /// @param rx_buffer_size Buffer size, or amount of bytes to be read from target buffer.
 /// @return > 0 as read bytes if succeeded, < 0 if no data could be read, 0 if client got disconnected.
-int ServerSocketSSLRead(char* rx_buffer, unsigned long rx_buffer_size)
+int ServerSocketSSLRead(char* restrict rx_buffer, const unsigned long rx_buffer_size)
 {
-    return SSL_read(*(ServerSocketGetPointerToSSLData()), rx_buffer, rx_buffer_size);
+    SSL** restrict dp_ssl = SocketGetCurrentThreadSSLObj();
+
+    return SSL_read(*dp_ssl, rx_buffer, rx_buffer_size);
 }
 
 /// @brief Writes encrypted data to buffer.
 /// @param tx_buffer TX buffer.
 /// @param tx_buffer_size TX buffer size.
 /// @return < 0 if any error happens, number of bytes sent otherwise.
-int ServerSocketSSLWrite(const char* tx_buffer, unsigned long tx_buffer_size)
+int ServerSocketSSLWrite(const char* restrict tx_buffer, const unsigned long tx_buffer_size)
 {
-    return SSL_write(*(ServerSocketGetPointerToSSLData()), tx_buffer, tx_buffer_size);
+    SSL** restrict dp_ssl = SocketGetCurrentThreadSSLObj();
+
+    return SSL_write(*dp_ssl, tx_buffer, tx_buffer_size);
 }
 
 /// @brief Frees previously allocated SSL resources.
 void SocketFreeSSLResources(void)
 {
-    if(*(ServerSocketGetPointerToSSLData()) != NULL)
-    {
-        SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL);
-        SSL_free(*(ServerSocketGetPointerToSSLData()));
-    }
-
     if(*(ServerSocketGetPointerToSSLContext()) != NULL)
     {
         SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANING_UP_SSL_CTX);
         SSL_CTX_free(*(ServerSocketGetPointerToSSLContext()));
+        *(ServerSocketGetPointerToSSLContext()) = NULL;
     }
 
     ERR_free_strings();
@@ -197,6 +210,17 @@ void SocketFreeSSLResources(void)
     CONF_modules_free();
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
+}
+
+/// @brief Frees given SSL object.
+/// @param p_ssl Pointer to SSL object to be freed.
+void ServerSocketFreeSSL(SSL* p_ssl)
+{
+    if(!p_ssl)
+        return;
+    
+    SSL_free(p_ssl);
+    p_ssl = NULL;
 }
 
 /*************************************/
