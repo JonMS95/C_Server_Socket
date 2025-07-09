@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/ssl.h>
 #include "ServerSocketSSL.h"
 #include "ServerSocketUse.h"
 #include "ServerSocketManageThreads.h"
@@ -32,6 +33,7 @@
 #define SERVER_SOCKET_MSG_ERR_THREAD_CANCELLATION   "An error happened while cancelling thread with ID: <%lu>."
 #define SERVER_SOCKET_MSG_JOINING_THREAD            "Joining thread with ID: <%lu>."
 #define SERVER_SOCKET_MSG_ERR_THREAD_JOIN           "An error happened while joining thread with ID: <%lu>."
+#define SERVER_SOCKET_MSG_ERR_MTX_LOCK              "Could not lock mutex: <%x>."
 
 #define SERVER_SOCKET_MSG_SSL_HANDSHAKE_NOK "SSL handshake failed."
 #define SERVER_SOCKET_MSG_SSL_HANDSHAKE_OK  "SSL handshake succeeded."
@@ -45,6 +47,7 @@
 /******** Type definitions ********/
 /**********************************/
 
+/// @brief Possible connection states.
 typedef enum
 {
     SSL_HANDSHAKE = 0   ,
@@ -53,6 +56,7 @@ typedef enum
 
 } SERVER_SOCKET_CONN_HANDLE_FSM;
 
+/// @brief Common socket instance arguments.
 typedef struct
 {
     bool secure;
@@ -60,16 +64,19 @@ typedef struct
     int (*interact_fn)(int client_socket);
 } SERVER_SOCKET_THREAD_COMMON_ARGS;
 
+/// @brief Arguments to be received by each socket instance. 
 typedef struct
 {
     int client_socket;
     SERVER_SOCKET_THREAD_COMMON_ARGS* thread_common_args;
 } SERVER_SOCKET_THREAD_ARGS;
 
+/// @brief Server socket thread data managing structure definition.
 typedef struct
 {
     pthread_t thread;
     bool active;
+    SSL* p_ssl;
     SERVER_SOCKET_THREAD_ARGS thread_args;
 } SERVER_SOCKET_THREAD_DATA;
 
@@ -80,10 +87,14 @@ typedef struct
 /******** Private variables ********/
 /***********************************/
 
+/// @brief Server instances counter.
 static int server_instances_num = 0;
+/// @brief Server instances data storing array.
 static SERVER_SOCKET_THREAD_DATA* server_instances_data = NULL;
+/// @brief Server socket common arguments storing variable pointer.
 static SERVER_SOCKET_THREAD_COMMON_ARGS* server_instances_common_args = NULL;
-MTX_GRD_CREATE(mtx_thread_array);
+/// @brief Mutex Guard type variable to handle concurrent read/write operations involving server_instances_data.
+static MTX_GRD_CREATE(mtx_thread_array);
 
 /***********************************/
 
@@ -91,9 +102,9 @@ MTX_GRD_CREATE(mtx_thread_array);
 /**** Private function prototypes ****/
 /*************************************/
 
-static int SocketStateSSLHandshake(int client_socket, bool non_blocking);
-static int SocketStateClose(int client_socket);
-static int SocketThreadDataClean(int client_socket);
+static int SocketStateSSLHandshake(const int client_socket, const bool non_blocking);
+static int SocketStateClose(const int client_socket);
+static int SocketThreadDataClean(const int client_socket);
 static void* ServerSocketThreadRoutine(void* args);
 static void SocketFreeThreadsData();
 static int SocketKillAllThreads();
@@ -108,7 +119,7 @@ static int SocketKillAllThreads();
 /// @param client_socket Client socket instance.
 /// @param bool non_blocking Tells whether or not is the socket non-blocking.
 /// @return 0 if handhsake was successfully performed, < 0 otherwise.
-static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
+static int SocketStateSSLHandshake(const int client_socket, const bool non_blocking)
 {
     int ssl_handshake = ServerSocketSSLHandshake(client_socket, non_blocking);
 
@@ -123,7 +134,7 @@ static int SocketStateSSLHandshake(int client_socket, bool non_blocking)
 /// @brief Close socket.
 /// @param client_socket Socket file descriptor.
 /// @return < 0 if it failed to close the socket.
-static int SocketStateClose(int client_socket)
+static int SocketStateClose(const int client_socket)
 {
     int close = CloseSocket(client_socket);
     
@@ -135,7 +146,10 @@ static int SocketStateClose(int client_socket)
     return close;    
 }
 
-static int SocketThreadDataClean(int client_socket)
+/// @brief Clean data associated to every active thread.
+/// @param client_socket Target socket instance.
+/// @return 0 if succeeded, < 0 otherwise.
+static int SocketThreadDataClean(const int client_socket)
 { 
     // Iterate through SERVER_SOCKET_THREAD_DATA looking for a thread which client socket value matches the current one,
     // erase all related data afterwards.
@@ -143,18 +157,27 @@ static int SocketThreadDataClean(int client_socket)
     MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
 
     if(!p_mtx_thread_array)
+    {
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_MTX_LOCK, pthread_self());
         return SERVER_SOCKET_MTX_LOCK_FAILURE;
+    }
 
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
+    {
         if(server_instances_data[thread_idx].thread_args.client_socket == client_socket)
         {
-            server_instances_data[thread_idx].active = false;
+            ServerSocketFreeSSL(server_instances_data[thread_idx].p_ssl);
+            server_instances_data[thread_idx] = (SERVER_SOCKET_THREAD_DATA){0};
             return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
         }
-    
+    }
+
     return SERVER_SOCKET_DATA_CLEAN_FAILURE;
 }
 
+/// @brief Common thread routine to be executed by every instantiated thread.
+/// @param args Input arguments (SERVER_SOCKET_THREAD_ARGS).
+/// @return 0 if succeeded, < 0 otherwise.
 static void* ServerSocketThreadRoutine(void* args)
 {
     SERVER_SOCKET_THREAD_ARGS* conn_handle_args = (SERVER_SOCKET_THREAD_ARGS*)args;
@@ -219,12 +242,16 @@ static void* ServerSocketThreadRoutine(void* args)
     pthread_exit(NULL);
 }
 
-static void SocketFreeThreadsData()
+/// @brief Frees data associated to every threads managing submodule.
+static void SocketFreeThreadsData(void)
 {
     MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
 
     if(!p_mtx_thread_array)
+    {
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_MTX_LOCK, pthread_self());
         return;
+    }
 
     if(server_instances_common_args)
     {
@@ -239,7 +266,9 @@ static void SocketFreeThreadsData()
     }
 }
 
-static int SocketKillAllThreads()
+/// @brief Kills every active thread.
+/// @return 0 if succeeded, < 0 otherwise.
+static int SocketKillAllThreads(void)
 {
     int thread_cancel_status = 0;
     int thread_join_status = 0;
@@ -250,7 +279,10 @@ static int SocketKillAllThreads()
     MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
     
     if(!p_mtx_thread_array)
+    {
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_MTX_LOCK, pthread_self());
         return SERVER_SOCKET_MTX_LOCK_FAILURE;
+    }
 
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
         if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread)
@@ -279,7 +311,13 @@ static int SocketKillAllThreads()
     return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
 }
 
-int SocketSetupThreads(int max_conn_num, bool secure, bool non_blocking, int (*interact_fn)(int client_socket))
+/// @brief Performs thread managing submodule's setup.
+/// @param max_conn_num Maximum number of handleable connections.
+/// @param secure Tells whether the socket is secure or nor (TLS/SSL).
+/// @param non_blocking Tells whether the socket is non-blocking.
+/// @param interact_fn Pointer to interaction function. It can be the one by default of any function provided by using ServerSocketRun.
+/// @return 0 if succeeded, < 0 otherwise.
+int SocketSetupThreads(const int max_conn_num, const bool secure, const bool non_blocking, int (*interact_fn)(int client_socket))
 {
     server_instances_num = max_conn_num;
 
@@ -301,12 +339,18 @@ int SocketSetupThreads(int max_conn_num, bool secure, bool non_blocking, int (*i
     return SERVER_SOCKET_MANAGE_THREADS_SUCCESS;
 }
 
-int SocketLaunchServerInstance(int client_socket)
+/// @brief Launches server socket instance.
+/// @param client_socket Target client-oriented server socket instance.
+/// @return 0 if succeeded, < 0 otherwise.
+int SocketLaunchServerInstance(const int client_socket)
 {
     MTX_GRD_LOCK_SC(&mtx_thread_array, p_mtx_thread_array);
 
     if(!p_mtx_thread_array)
+    {
+        SVRTY_LOG_ERR(SERVER_SOCKET_MSG_ERR_MTX_LOCK, pthread_self());
         return SERVER_SOCKET_MTX_LOCK_FAILURE;
+    }
 
     // Look for a free spot. If there's not any free spot, return FAILURE. Otherwise, launch thread and mark it as "running".
     for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
@@ -338,10 +382,27 @@ int SocketLaunchServerInstance(int client_socket)
     return SERVER_SOCKET_MANAGE_THREAD_NO_FREE_SPOTS;
 }
 
-int SocketFreeThreadsResources()
+/// @brief Retrieves current thread's SSL object (if any) based on thread's ID.
+/// @return SSL object belonging to current thread (if any).
+SSL** SocketGetCurrentThreadSSLObj(void)
+{
+    if(!ServerSocketIsSecure())
+        return NULL;
+
+    for(int thread_idx = 0; thread_idx < server_instances_num; thread_idx++)
+        if(server_instances_data[thread_idx].active && server_instances_data[thread_idx].thread == pthread_self())
+            return &server_instances_data[thread_idx].p_ssl;
+    
+    return NULL;
+}
+
+/// @brief Frees resources priorly allocated by threads managing submodule.
+/// @return 0 if succeeded, < 0 otherwise.
+int SocketFreeThreadsResources(void)
 {
     int kill_threads = SocketKillAllThreads();
     SocketFreeThreadsData();
+    MTX_GRD_DESTROY(&mtx_thread_array);
     return kill_threads;
 }
 
