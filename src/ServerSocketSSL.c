@@ -132,14 +132,12 @@ int ServerSocketSSLSetup(const char* restrict cert_path, const char* restrict pr
 /// @brief Perform SSL handshake if needed.
 /// @param client_socket Client socket instance.
 /// @param bool non_blocking Tells whether or not is the socket non-blocking.
-/// @param p_ssl Pointer to SSL object.
 /// @return 0 if handhsake was successfully performed, < 0 otherwise.
 int ServerSocketSSLHandshake(const int client_socket, const bool non_blocking)
 {
     SSL** restrict dp_ssl = SocketGetCurrentThreadSSLObj();
-    SSL* restrict p_ssl = NULL;
     
-    if(!dp_ssl || !*dp_ssl)
+    if(!dp_ssl)
         return SERVER_SOCKET_SETUP_SSL_NULL_SSL;
     
     *dp_ssl = SSL_new(*(ServerSocketGetPointerToSSLContext()));
