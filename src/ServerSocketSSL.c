@@ -145,7 +145,8 @@ int ServerSocketSSLHandshake(const int client_socket, const bool non_blocking)
     if(!*dp_ssl)
         return SERVER_SOCKET_SETUP_SSL_NULL_SSL;
 
-    int set_ssl_fd = SSL_set_fd(*dp_ssl, client_socket);
+    if(!(SSL_set_fd(*dp_ssl, client_socket)))
+        return SERVER_SOCKET_SETUP_SSL_NULL_SSL;
 
     // Unset non-blocking feature by default, activate it again later if required.
     int unset_non_blocking = SocketUnsetNonBlocking(client_socket);
