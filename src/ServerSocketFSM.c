@@ -12,6 +12,7 @@
 #include "ServerSocketDefaultInteract.h"
 #include "ServerSocket_api.h"
 #include "SeverityLog_api.h"
+#include "SignalHandler_api.h"
 
 /************************************/
 
@@ -19,8 +20,7 @@
 /******** Define statements ********/
 /***********************************/
 
-#define SERVER_SOCKET_SET_SIGINT_ERR            "Error while trying to set up SIGINT handler."
-#define SERVER_SOCKET_MSG_SIGINT_RECEIVED       "Received Ctrl+C (SIGINT). Cleaning up and exiting."
+#define SERVER_SOCKET_MSG_SIGNAL_HANDLER_NOK    "Could not setup signal handler (%s)"
 #define SERVER_SOCKET_MSG_CREATION_NOK          "Socket file descriptor creation failed."
 #define SERVER_SOCKET_MSG_CREATION_OK           "Socket file descriptor created."
 #define SERVER_SOCKET_MSG_SETUP_SSL_NOK         "SSL setup failed."
@@ -36,6 +36,7 @@
 #define SERVER_SOCKET_MANAGE_THREADS_NOK        "Server instance creation failed."
 #define SERVER_SOCKET_MANAGE_THREADS_OK         "Server instance creation succeeded."
 #define SERVER_SOCKET_MSG_REFUSE                "Connection refused by the server. Closing socket in %d seconds."
+#define SERVER_SOCKET_MSG_CLEANUP               "Cleaning up ServerSocket's resources."
 
 #define SERVER_SOCKET_LEN_MSG_REFUSE            100
 
@@ -67,7 +68,8 @@ typedef enum
 /******** Private variables ********/
 /***********************************/
 
-static volatile int ctrlCPressed        = 0;
+static bool resources_freed = false;
+static bool server_active   = false;
 
 /***********************************/
 
@@ -75,8 +77,8 @@ static volatile int ctrlCPressed        = 0;
 /**** Private function prototypes ****/
 /*************************************/
 
-static void SocketFreeResources(void);
-static void SocketSIGINTHandler(int signum);
+static void SocketCleanup(void);
+static void SocketSignalHandler(int signum);
 static int SocketStateCreate(void);
 static int SocketStateOptions(  int             socket_desc     ,
                                 bool            reuse_address   ,
@@ -85,7 +87,8 @@ static int SocketStateOptions(  int             socket_desc     ,
                                 unsigned long   rx_timeout_usecs,
                                 unsigned long   tx_timeout_secs ,
                                 unsigned long   tx_timeout_usecs);
-static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path);
+static int SocketStateSetupSSL( const char* restrict cert_path      ,
+                                const char* restrict priv_key_path  );
 static int SocketStateBind( int socket_desc             ,
                             int server_port             ,
                             sa_family_t address_family  ,
@@ -102,24 +105,27 @@ static int SocketStateRefuse(int client_socket);
 /*************************************/
 
 /// @brief Frees previously heap allocated memory before exiting the program.
-static void SocketFreeResources(void)
+static void SocketCleanup(void)
 {
+    if(resources_freed)
+        return;
+
+    resources_freed = true;
+    server_active = false;
+
+    SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANUP);
+
     SocketFreeThreadsResources();
     SocketFreeSSLResources();
-}
-
-/// @brief Handle SIGINT signal (Ctrl+C).
-/// @param signum Signal number (SIGINT by default).
-static void SocketSIGINTHandler(int signum)
-{
-    // NEW VERSION (THREADS): apart from freeing all resources, all threads must be terminated.
-    // For such thing to be possible, threads should be cancellable (deferred).
-    SVRTY_LOG_WNG(SERVER_SOCKET_MSG_SIGINT_RECEIVED);
-    ctrlCPressed = 1; // Set the flag to indicate Ctrl+C was pressed
-
-    SocketFreeResources();
 
     exit(EXIT_SUCCESS);
+}
+
+/// @brief Handle incoming signals.
+/// @param signum Signal number.
+static void SocketSignalHandler(const int signum)
+{
+    SocketCleanup();
 }
 
 /// @brief Create socket descriptor.
@@ -167,7 +173,7 @@ static int SocketStateOptions(  int             socket_desc     ,
 /// @param cert_path Path to certificate.
 /// @param priv_key_path Path to private key.
 /// @return 0 if succeeded, < 0 otherwise.
-static int SocketStateSetupSSL(const char* cert_path, const char* priv_key_path)
+static int SocketStateSetupSSL(const char* restrict cert_path, const char* restrict priv_key_path)
 {
     int server_socket_SSL_setup = ServerSocketSSLSetup(cert_path, priv_key_path);
 
@@ -260,6 +266,19 @@ static int SocketStateRefuse(int client_socket)
     return close_socket;
 }
 
+/// @brief Function to be called on library load.
+/// @param  
+static void __attribute__((constructor)) ServerSocketLoad(void)
+{
+    resources_freed = false;
+}
+
+/// @brief Function to be called when library is unloaded.
+static void __attribute__((destructor)) ServerSocketUnload(void)
+{
+    SocketCleanup();
+}
+
 /// @brief Runs server socket.
 /// @param server_port Port server is meant to be listening to.
 /// @param max_conn_num Maximum number of connections.
@@ -304,13 +323,12 @@ int ServerSocketRun(int server_port                                     ,
     if(setup_threads < 0)
         return setup_threads;
 
-    if(signal(SIGINT, SocketSIGINTHandler) == SIG_ERR)
-    {
-        SVRTY_LOG_ERR(SERVER_SOCKET_SET_SIGINT_ERR);
-        exit(EXIT_FAILURE);
-    }
+   if(SignalHandlerAddCallback(SocketSignalHandler, SIG_HDL_ALL_SIGNALS_MASK))
+       SVRTY_LOG_DBG(SERVER_SOCKET_MSG_SIGNAL_HANDLER_NOK, SIG_HDL_GET_LAST_ERR_STR);
 
-    while(!ctrlCPressed)
+    server_active = true;
+
+    while(server_active)
     {
         switch (socket_fsm)
         {
@@ -326,7 +344,13 @@ int ServerSocketRun(int server_port                                     ,
             // Set general socket FD options (keepalive, heartbeat, ...)
             case OPTIONS:
             {
-                if(SocketStateOptions(socket_desc, reuse_address, reuse_port, rx_timeout_s, rx_timeout_us, tx_timeout_s, tx_timeout_us) >= 0)
+                if(SocketStateOptions(  socket_desc     ,
+                                        reuse_address   ,
+                                        reuse_port      ,
+                                        rx_timeout_s    ,
+                                        rx_timeout_us   ,
+                                        tx_timeout_s    ,
+                                        tx_timeout_us   ) >= 0)
                     socket_fsm = SETUP_SSL;
             }
             break;
@@ -401,7 +425,7 @@ int ServerSocketRun(int server_port                                     ,
 
             case CLOSE:
             {
-                SocketFreeResources();
+                SocketCleanup();
 
                 return 0;
             }

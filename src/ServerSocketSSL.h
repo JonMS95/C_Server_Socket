@@ -6,6 +6,7 @@
 /************************************/
 
 #include <stdbool.h>
+#include <openssl/ssl.h>
 
 /************************************/
 
@@ -14,10 +15,11 @@
 /*************************************/
 
 bool ServerSocketIsSecure(void);
-int ServerSocketSSLSetup(const char* cert_path, const char* priv_key_path);
-int ServerSocketSSLHandshake(int client_socket, bool non_blocking);
-int ServerSocketSSLRead(char* rx_buffer, unsigned long rx_buffer_size);
-int ServerSocketSSLWrite(const char* tx_buffer, unsigned long tx_buffer_size);
+int ServerSocketSSLSetup(const char* restrict cert_path, const char* restrict priv_key_path);
+int ServerSocketSSLHandshake(const int client_socket, const bool non_blocking);
+int ServerSocketSSLRead(char* restrict rx_buffer, const unsigned long rx_buffer_size);
+int ServerSocketSSLWrite(const char* restrict tx_buffer, const unsigned long tx_buffer_size);
+void ServerSocketFreeSSL(SSL* p_ssl);
 void SocketFreeSSLResources(void);
 
 /*************************************/
