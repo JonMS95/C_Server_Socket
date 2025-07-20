@@ -36,6 +36,7 @@
 #define SERVER_SOCKET_MANAGE_THREADS_NOK        "Server instance creation failed."
 #define SERVER_SOCKET_MANAGE_THREADS_OK         "Server instance creation succeeded."
 #define SERVER_SOCKET_MSG_REFUSE                "Connection refused by the server. Closing socket in %d seconds."
+#define SERVER_SOCKET_MSG_CLEANUP               "Cleaning up ServerSocket's resources."
 
 #define SERVER_SOCKET_LEN_MSG_REFUSE            100
 
@@ -111,6 +112,8 @@ static void SocketCleanup(void)
 
     resources_freed = true;
     server_active = false;
+
+    SVRTY_LOG_DBG(SERVER_SOCKET_MSG_CLEANUP);
 
     SocketFreeThreadsResources();
     SocketFreeSSLResources();
