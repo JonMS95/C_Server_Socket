@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1] 25-07-2025
+### Added
+* Well organized signal management (by using newly added C_Signal_Handler dependency).
+* Makefile now includes address sanitize flag for DEBUG releases.
+
+### Fixed
+* SSL objects management has now been fixed (each thread should handle its own).
+* Fixed some memory allocation as well as thread management errors.
+
+### Changed
+* Updated many dependencies to their latest versions.
+* Many function prototypes have been sligthy modified for performance and robustness purposes (const/restrict modifiers).
+
+
 ## [2.0] 07-06-2025
 ### Added
 * Thread usage: from now on, POSIX threads are going to be used to run multiple instances instead of processes.
